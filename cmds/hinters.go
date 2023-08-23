@@ -2,6 +2,7 @@ package cmds
 
 import (
 	currencycmds "github.com/ProtoconNet/mitum-currency/v3/cmds"
+	"github.com/ProtoconNet/mitum-token/types"
 	"github.com/ProtoconNet/mitum2/launch"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/encoder"
@@ -12,6 +13,9 @@ var SupportedProposalOperationFactHinters []encoder.DecodeDetail
 
 var AddedHinters = []encoder.DecodeDetail{
 	// revive:disable-next-line:line-length-limit
+	{Hint: types.ApproveInfoHint, Instance: types.ApproveInfo{}},
+	{Hint: types.PolicyHint, Instance: types.Policy{}},
+	{Hint: types.DesignHint, Instance: types.Design{}},
 }
 
 var AddedSupportedHinters = []encoder.DecodeDetail{}
