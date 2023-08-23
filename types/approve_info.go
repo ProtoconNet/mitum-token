@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 
 	"github.com/ProtoconNet/mitum-currency/v3/common"
+	"github.com/ProtoconNet/mitum-token/utils"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
+	"github.com/pkg/errors"
 )
 
 var ApproveInfoHint = hint.MustNewHint("mitum-token-approve-info-v0.0.1")
@@ -26,21 +28,23 @@ func NewApproveInfo(account base.Address, approved map[string]common.Big) Approv
 }
 
 func (a ApproveInfo) IsValid([]byte) error {
+	e := util.ErrInvalid.Errorf(utils.ErrStringInvalid(a))
+
 	if err := util.CheckIsValiders(nil, false,
 		a.BaseHinter,
 		a.account,
 	); err != nil {
-		return err
+		return e.Wrap(err)
 	}
 
 	founds := map[string]struct{}{}
 	for ac, big := range a.approved {
 		if !big.OverZero() {
-			return util.ErrInvalid.Errorf("zero big")
+			return e.Wrap(errors.Errorf("zero big"))
 		}
 
 		if _, ok := founds[ac]; ok {
-			return util.ErrInvalid.Errorf("duplicate approved account found, %s", ac)
+			return e.Wrap(errors.Errorf("duplicate approved account found, %s", ac))
 		}
 
 		founds[ac] = struct{}{}

@@ -2,6 +2,8 @@ package cmds
 
 import (
 	currencycmds "github.com/ProtoconNet/mitum-currency/v3/cmds"
+	"github.com/ProtoconNet/mitum-token/operation/token"
+	"github.com/ProtoconNet/mitum-token/state"
 	"github.com/ProtoconNet/mitum-token/types"
 	"github.com/ProtoconNet/mitum2/launch"
 	"github.com/ProtoconNet/mitum2/util"
@@ -16,9 +18,15 @@ var AddedHinters = []encoder.DecodeDetail{
 	{Hint: types.ApproveInfoHint, Instance: types.ApproveInfo{}},
 	{Hint: types.PolicyHint, Instance: types.Policy{}},
 	{Hint: types.DesignHint, Instance: types.Design{}},
+
+	{Hint: state.DesignStateValueHint, Instance: state.DesignStateValue{}},
+
+	{Hint: token.RegisterTokenHint, Instance: token.RegisterToken{}},
 }
 
-var AddedSupportedHinters = []encoder.DecodeDetail{}
+var AddedSupportedHinters = []encoder.DecodeDetail{
+	{Hint: token.RegisterTokenFactHint, Instance: token.RegisterTokenFact{}},
+}
 
 func init() {
 	defaultLen := len(launch.Hinters)

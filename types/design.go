@@ -2,8 +2,10 @@ package types
 
 import (
 	"github.com/ProtoconNet/mitum-currency/v3/types"
+	"github.com/ProtoconNet/mitum-token/utils"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
+	"github.com/pkg/errors"
 )
 
 var DesignHint = hint.MustNewHint("mitum-token-design-v0.0.1")
@@ -25,16 +27,18 @@ func NewDesign(tokenID types.CurrencyID, symbol string, policy Policy) Design {
 }
 
 func (d Design) IsValid([]byte) error {
+	e := util.ErrInvalid.Errorf(utils.ErrStringInvalid(d))
+
 	if err := util.CheckIsValiders(nil, false,
 		d.BaseHinter,
 		d.tokenID,
 		d.policy,
 	); err != nil {
-		return err
+		return e.Wrap(err)
 	}
 
 	if d.symbol == "" {
-		return util.ErrInvalid.Errorf("empty symbol")
+		return e.Wrap(errors.Errorf("empty symbol"))
 	}
 
 	return nil

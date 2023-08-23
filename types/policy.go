@@ -5,8 +5,10 @@ import (
 	"sort"
 
 	"github.com/ProtoconNet/mitum-currency/v3/common"
+	"github.com/ProtoconNet/mitum-token/utils"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
+	"github.com/pkg/errors"
 )
 
 var PolicyHint = hint.MustNewHint("mitum-token-policy-v0.0.1")
@@ -26,21 +28,27 @@ func NewPolicy(totalSupply common.Big, approveList []ApproveInfo) Policy {
 }
 
 func (p Policy) IsValid([]byte) error {
+	e := util.ErrInvalid.Errorf(utils.ErrStringInvalid(p))
+
 	if err := p.BaseHinter.IsValid(nil); err != nil {
-		return err
+		return e.Wrap(err)
 	}
 
 	founds := map[string]struct{}{}
 	for _, a := range p.approveList {
 		if err := a.IsValid(nil); err != nil {
-			return err
+			return e.Wrap(err)
 		}
 
 		if _, ok := founds[a.account.String()]; ok {
-			return util.ErrInvalid.Errorf("duplicate account found, %s", a.account)
+			return e.Wrap(errors.Errorf("duplicate account found, %s", a.account))
 		}
 
 		founds[a.account.String()] = struct{}{}
+	}
+
+	if !p.totalSupply.OverNil() {
+		return e.Wrap(errors.Errorf("nil big"))
 	}
 
 	return nil

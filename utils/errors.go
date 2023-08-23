@@ -2,20 +2,48 @@ package utils
 
 import (
 	"fmt"
+	"strings"
 )
 
-func ErrStringDecodeBSON(i interface{}) string {
-	return fmt.Sprintf("failed to decode bson of %T", i)
+func ErrStringInvalid(t any) string {
+	return fmt.Sprintf("invalid %T", t)
 }
 
-func ErrStringDecodeJSON(i interface{}) string {
-	return fmt.Sprintf("failed to decode json of %T", i)
+func ErrStringDecodeBSON(t any) string {
+	return fmt.Sprintf("failed to decode bson of %T", t)
 }
 
-func ErrStringUnmarshal(i interface{}) string {
-	return fmt.Sprintf("failed to unmarshal %T", i)
+func ErrStringDecodeJSON(t any) string {
+	return fmt.Sprintf("failed to decode json of %T", t)
 }
 
-func ErrStringTypeCast(expected interface{}, received interface{}) string {
+func ErrStringUnmarshal(t any) string {
+	return fmt.Sprintf("failed to unmarshal %T", t)
+}
+
+func ErrStringTypeCast(expected any, received any) string {
 	return fmt.Sprintf("expected %T, not %T", expected, received)
+}
+
+func ErrStringCreate(k string) string {
+	return fmt.Sprintf("failed to create %s", k)
+}
+
+func ErrStringWrap(s string, e error) string {
+	if e != nil {
+		return fmt.Sprintf("%s: %w", s, e)
+	}
+	return s
+}
+
+func StringChain(s ...string) string {
+	return strings.Join(s, ", ")
+}
+
+func StringerChain(s ...fmt.Stringer) string {
+	ss := make([]string, len(s))
+	for i, str := range s {
+		ss[i] = str.String()
+	}
+	return strings.Join(ss, ", ")
 }

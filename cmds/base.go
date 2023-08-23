@@ -6,7 +6,9 @@ import (
 	"os"
 
 	currencycmds "github.com/ProtoconNet/mitum-currency/v3/cmds"
+	"github.com/pkg/errors"
 
+	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/launch"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/encoder"
@@ -78,4 +80,42 @@ func PAddHinters(ctx context.Context) (context.Context, error) {
 	}
 
 	return ctx, nil
+}
+
+type OperationCommand struct {
+	BaseCommand
+	currencycmds.OperationFlags
+	Sender   currencycmds.AddressFlag    `arg:"" name:"sender" help:"sender address" required:"true"`
+	Contract currencycmds.AddressFlag    `arg:"" name:"contract" help:"contract address to register token" required:"true"`
+	TokenID  currencycmds.CurrencyIDFlag `arg:"" name:"token-id" help:"token id" required:"true"`
+	Currency currencycmds.CurrencyIDFlag `arg:"" name:"currency" help:"currency id" required:"true"`
+	sender   base.Address
+	contract base.Address
+}
+
+func NewOperationCommand() *OperationCommand {
+	cmd := NewBaseCommand()
+	return &OperationCommand{
+		BaseCommand: *cmd,
+	}
+}
+
+func (cmd *OperationCommand) parseFlags() error {
+	if err := cmd.OperationFlags.IsValid(nil); err != nil {
+		return err
+	}
+
+	sender, err := cmd.Sender.Encode(enc)
+	if err != nil {
+		return errors.Wrapf(err, "invalid sender format, %q", cmd.Sender.String())
+	}
+	cmd.sender = sender
+
+	contract, err := cmd.Contract.Encode(enc)
+	if err != nil {
+		return errors.Wrapf(err, "invalid contract account format, %q", cmd.Contract.String())
+	}
+	cmd.contract = contract
+
+	return nil
 }
