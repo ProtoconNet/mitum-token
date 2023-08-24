@@ -41,7 +41,7 @@ func (p Policy) IsValid([]byte) error {
 		}
 
 		if _, ok := founds[a.account.String()]; ok {
-			return e.Wrap(errors.Errorf("duplicate account found, %s", a.account))
+			return e.Wrap(errors.Errorf(utils.ErrStringDuplicate("account", a.account.String())))
 		}
 
 		founds[a.account.String()] = struct{}{}

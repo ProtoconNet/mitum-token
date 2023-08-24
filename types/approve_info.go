@@ -44,7 +44,7 @@ func (a ApproveInfo) IsValid([]byte) error {
 		}
 
 		if _, ok := founds[ac]; ok {
-			return e.Wrap(errors.Errorf("duplicate approved account found, %s", ac))
+			return e.Wrap(errors.Errorf(utils.ErrStringDuplicate("approved", ac)))
 		}
 
 		founds[ac] = struct{}{}

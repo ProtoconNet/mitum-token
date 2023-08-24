@@ -31,9 +31,13 @@ func ErrStringCreate(k string) string {
 
 func ErrStringWrap(s string, e error) string {
 	if e != nil {
-		return fmt.Sprintf("%s: %w", s, e)
+		return fmt.Sprintf("%s: %v", s, e)
 	}
 	return s
+}
+
+func ErrStringDuplicate(name, k string) string {
+	return fmt.Sprintf("duplicate %s found, %s", name, k)
 }
 
 func StringChain(s ...string) string {
