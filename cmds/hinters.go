@@ -20,12 +20,15 @@ var AddedHinters = []encoder.DecodeDetail{
 	{Hint: types.DesignHint, Instance: types.Design{}},
 
 	{Hint: state.DesignStateValueHint, Instance: state.DesignStateValue{}},
+	{Hint: state.TokenBalanceStateValueHint, Instance: state.TokenBalanceStateValue{}},
 
 	{Hint: token.RegisterTokenHint, Instance: token.RegisterToken{}},
+	{Hint: token.MintHint, Instance: token.Mint{}},
 }
 
 var AddedSupportedHinters = []encoder.DecodeDetail{
 	{Hint: token.RegisterTokenFactHint, Instance: token.RegisterTokenFact{}},
+	{Hint: token.MintFactHint, Instance: token.MintFact{}},
 }
 
 func init() {
