@@ -53,7 +53,7 @@ func (fact TokenFact) IsValid([]byte) error {
 	}
 
 	if fact.sender.Equal(fact.contract) {
-		return e.Wrap(errors.Errorf("sender is same with contract account, %s", fact.sender))
+		return e.Wrap(errors.Errorf("contract address is same with sender, %s", fact.sender))
 	}
 
 	return nil

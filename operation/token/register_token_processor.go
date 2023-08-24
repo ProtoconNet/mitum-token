@@ -132,15 +132,7 @@ func (opp *RegisterTokenProcessor) Process(
 		return nil, nil, e.Wrap(errors.Errorf(utils.ErrStringTypeCast(RegisterTokenFact{}, op.Fact())))
 	}
 
-	policy := types.NewPolicy(fact.TotalSupply(), []types.ApproveInfo{})
-	if err := policy.IsValid(nil); err != nil {
-		return nil, ErrInvalid(policy, err), nil
-	}
-
-	design := types.NewDesign(fact.TokenID(), fact.Symbol(), policy)
-	if err := design.IsValid(nil); err != nil {
-		return nil, ErrInvalid(design, err), nil
-	}
+	g := state.NewStateKeyGenerator(fact.Contract(), fact.TokenID())
 
 	sts := make([]base.StateMergeValue, 2, 3)
 
@@ -150,7 +142,15 @@ func (opp *RegisterTokenProcessor) Process(
 	}
 	sts[0] = v
 
-	g := state.NewStateKeyGenerator(fact.Contract(), fact.TokenID())
+	policy := types.NewPolicy(fact.TotalSupply(), []types.ApproveInfo{})
+	if err := policy.IsValid(nil); err != nil {
+		return nil, ErrInvalid(policy, err), nil
+	}
+
+	design := types.NewDesign(fact.TokenID(), fact.Symbol(), policy)
+	if err := design.IsValid(nil); err != nil {
+		return nil, ErrInvalid(design, err), nil
+	}
 
 	sts[1] = currencystate.NewStateMergeValue(
 		g.Design(),

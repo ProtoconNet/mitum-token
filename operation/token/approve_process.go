@@ -131,6 +131,14 @@ func (opp *ApproveProcessor) Process(
 
 	g := state.NewStateKeyGenerator(fact.Contract(), fact.TokenID())
 
+	sts := make([]base.StateMergeValue, 2)
+
+	v, baseErr, err := calculateCurrencyFee(fact.TokenFact, getStateFunc)
+	if baseErr != nil || err != nil {
+		return nil, baseErr, err
+	}
+	sts[0] = v
+
 	st, err := currencystate.ExistsState(g.Design(), "key of design", getStateFunc)
 	if err != nil {
 		return nil, ErrStateNotFound("token design", utils.StringerChain(fact.Contract(), fact.TokenID()), err), nil
@@ -154,11 +162,8 @@ func (opp *ApproveProcessor) Process(
 	}
 
 	if -1 < idx {
-		for a, big := range al[idx].Approved() {
-			if a == fact.Approved().String() {
-				amount = amount.Add(big)
-				break
-			}
+		if big, found := al[idx].Approved()[fact.approved.String()]; found {
+			amount = amount.Add(big)
 		}
 
 		m := al[idx].Approved()
@@ -183,14 +188,6 @@ func (opp *ApproveProcessor) Process(
 	if err := design.IsValid(nil); err != nil {
 		return nil, ErrInvalid(design, err), nil
 	}
-
-	sts := make([]base.StateMergeValue, 2)
-
-	v, baseErr, err := calculateCurrencyFee(fact.TokenFact, getStateFunc)
-	if baseErr != nil || err != nil {
-		return nil, baseErr, err
-	}
-	sts[0] = v
 
 	sts[1] = currencystate.NewStateMergeValue(
 		g.Design(),

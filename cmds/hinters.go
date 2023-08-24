@@ -27,6 +27,7 @@ var AddedHinters = []encoder.DecodeDetail{
 	{Hint: token.BurnHint, Instance: token.Burn{}},
 	{Hint: token.ApproveHint, Instance: token.Approve{}},
 	{Hint: token.TransferHint, Instance: token.Transfer{}},
+	{Hint: token.TransferFromHint, Instance: token.TransferFrom{}},
 }
 
 var AddedSupportedHinters = []encoder.DecodeDetail{
@@ -35,6 +36,7 @@ var AddedSupportedHinters = []encoder.DecodeDetail{
 	{Hint: token.BurnFactHint, Instance: token.BurnFact{}},
 	{Hint: token.ApproveFactHint, Instance: token.ApproveFact{}},
 	{Hint: token.TransferFactHint, Instance: token.TransferFact{}},
+	{Hint: token.TransferFromFactHint, Instance: token.TransferFromFact{}},
 }
 
 func init() {

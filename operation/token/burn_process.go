@@ -156,6 +156,14 @@ func (opp *BurnProcessor) Process(
 
 	g := state.NewStateKeyGenerator(fact.Contract(), fact.TokenID())
 
+	sts := make([]base.StateMergeValue, 3)
+
+	v, baseErr, err := calculateCurrencyFee(fact.TokenFact, getStateFunc)
+	if baseErr != nil || err != nil {
+		return nil, baseErr, err
+	}
+	sts[0] = v
+
 	st, err := currencystate.ExistsState(g.Design(), "key of design", getStateFunc)
 	if err != nil {
 		return nil, ErrStateNotFound("token design", utils.StringerChain(fact.Contract(), fact.TokenID()), err), nil
@@ -178,14 +186,6 @@ func (opp *BurnProcessor) Process(
 	if err := design.IsValid(nil); err != nil {
 		return nil, ErrInvalid(design, err), nil
 	}
-
-	sts := make([]base.StateMergeValue, 3)
-
-	v, baseErr, err := calculateCurrencyFee(fact.TokenFact, getStateFunc)
-	if baseErr != nil || err != nil {
-		return nil, baseErr, err
-	}
-	sts[0] = v
 
 	sts[1] = currencystate.NewStateMergeValue(
 		g.Design(),
