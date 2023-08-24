@@ -32,7 +32,8 @@ func CheckDuplication(opr *currencyprocessor.OperationProcessor, op mitumbase.Op
 	case token.RegisterToken,
 		token.Mint,
 		token.Burn,
-		token.Approve:
+		token.Approve,
+		token.Transfer:
 		did, didtype, err = checkDuplicateSender(t)
 	default:
 		return nil
@@ -88,7 +89,8 @@ func GetNewProcessor(opr *currencyprocessor.OperationProcessor, op mitumbase.Ope
 		token.RegisterToken,
 		token.Mint,
 		token.Burn,
-		token.Approve:
+		token.Approve,
+		token.Transfer:
 		return nil, false, errors.Errorf("%T needs SetProcessor", t)
 	default:
 		return nil, false, nil
