@@ -50,8 +50,8 @@ func (fact MintFact) IsValid([]byte) error {
 		return e.Wrap(err)
 	}
 
-	if fact.sender.Equal(fact.receiver) {
-		return e.Wrap(errors.Errorf("sender is same with receiver, %s", fact.receiver))
+	if fact.contract.Equal(fact.receiver) {
+		return e.Wrap(errors.Errorf("contract address is same with receiver, %s", fact.receiver))
 	}
 
 	if !fact.amount.OverZero() {
