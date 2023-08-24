@@ -24,11 +24,13 @@ var AddedHinters = []encoder.DecodeDetail{
 
 	{Hint: token.RegisterTokenHint, Instance: token.RegisterToken{}},
 	{Hint: token.MintHint, Instance: token.Mint{}},
+	{Hint: token.BurnHint, Instance: token.Burn{}},
 }
 
 var AddedSupportedHinters = []encoder.DecodeDetail{
 	{Hint: token.RegisterTokenFactHint, Instance: token.RegisterTokenFact{}},
 	{Hint: token.MintFactHint, Instance: token.MintFact{}},
+	{Hint: token.BurnFactHint, Instance: token.BurnFact{}},
 }
 
 func init() {

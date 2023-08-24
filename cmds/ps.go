@@ -48,6 +48,8 @@ func POperationProcessorsMap(pctx context.Context) (context.Context, error) {
 
 	ps := []processorInfo{
 		{token.RegisterTokenHint, token.NewRegisterTokenProcessor()},
+		{token.MintHint, token.NewMintProcessor()},
+		{token.BurnHint, token.NewBurnProcessor()},
 	}
 
 	for _, p := range ps {

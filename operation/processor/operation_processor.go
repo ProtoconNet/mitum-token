@@ -29,9 +29,9 @@ func CheckDuplication(opr *currencyprocessor.OperationProcessor, op mitumbase.Op
 	var err error
 
 	switch t := op.(type) {
-	case token.RegisterToken:
-		did, didtype, err = checkDuplicateSender(t)
-	case token.Mint:
+	case token.RegisterToken,
+		token.Mint,
+		token.Burn:
 		did, didtype, err = checkDuplicateSender(t)
 	default:
 		return nil
@@ -85,7 +85,8 @@ func GetNewProcessor(opr *currencyprocessor.OperationProcessor, op mitumbase.Ope
 		currency.CurrencyPolicyUpdater,
 		currency.SuffrageInflation,
 		token.RegisterToken,
-		token.Mint:
+		token.Mint,
+		token.Burn:
 		return nil, false, errors.Errorf("%T needs SetProcessor", t)
 	default:
 		return nil, false, nil

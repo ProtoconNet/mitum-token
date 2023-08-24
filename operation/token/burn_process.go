@@ -18,34 +18,34 @@ import (
 	"github.com/pkg/errors"
 )
 
-var mintProcessorPool = sync.Pool{
+var burnProcessorPool = sync.Pool{
 	New: func() interface{} {
-		return new(MintProcessor)
+		return new(BurnProcessor)
 	},
 }
 
-func (Mint) Process(
+func (Burn) Process(
 	_ context.Context, _ base.GetStateFunc,
 ) ([]base.StateMergeValue, base.OperationProcessReasonError, error) {
 	return nil, nil, nil
 }
 
-type MintProcessor struct {
+type BurnProcessor struct {
 	*base.BaseOperationProcessor
 }
 
-func NewMintProcessor() currencytypes.GetNewProcessor {
+func NewBurnProcessor() currencytypes.GetNewProcessor {
 	return func(
 		height base.Height,
 		getStateFunc base.GetStateFunc,
 		newPreProcessConstraintFunc base.NewOperationProcessorProcessFunc,
 		newProcessConstraintFunc base.NewOperationProcessorProcessFunc,
 	) (base.OperationProcessor, error) {
-		t := MintProcessor{}
+		t := BurnProcessor{}
 		e := util.StringError(utils.ErrStringCreate(fmt.Sprintf("new %T", t)))
 
-		nopp := mintProcessorPool.Get()
-		opp, ok := nopp.(*MintProcessor)
+		nopp := burnProcessorPool.Get()
+		opp, ok := nopp.(*BurnProcessor)
 		if !ok {
 			return nil, e.Wrap(errors.Errorf(utils.ErrStringTypeCast(t, nopp)))
 		}
@@ -62,14 +62,14 @@ func NewMintProcessor() currencytypes.GetNewProcessor {
 	}
 }
 
-func (opp *MintProcessor) PreProcess(
+func (opp *BurnProcessor) PreProcess(
 	ctx context.Context, op base.Operation, getStateFunc base.GetStateFunc,
 ) (context.Context, base.OperationProcessReasonError, error) {
 	e := util.StringError(ErrStringPreProcess(*opp))
 
-	fact, ok := op.Fact().(MintFact)
+	fact, ok := op.Fact().(BurnFact)
 	if !ok {
-		return ctx, nil, e.Wrap(errors.Errorf(utils.ErrStringTypeCast(MintFact{}, op.Fact())))
+		return ctx, nil, e.Wrap(errors.Errorf(utils.ErrStringTypeCast(BurnFact{}, op.Fact())))
 	}
 
 	if err := fact.IsValid(nil); err != nil {
@@ -81,7 +81,7 @@ func (opp *MintProcessor) PreProcess(
 	}
 
 	if err := currencystate.CheckNotExistsState(extstate.StateKeyContractAccount(fact.Sender()), getStateFunc); err != nil {
-		return nil, ErrBaseOperationProcess("contract account cannot mint token", fact.Sender().String(), err), nil
+		return nil, ErrBaseOperationProcess("contract account cannot burn token", fact.Sender().String(), err), nil
 	}
 
 	st, err := currencystate.ExistsState(extstate.StateKeyContractAccount(fact.Contract()), "key of contract account", getStateFunc)
@@ -89,31 +89,51 @@ func (opp *MintProcessor) PreProcess(
 		return nil, ErrStateNotFound("contract", fact.Contract().String(), err), nil
 	}
 
-	ca, err := extstate.StateContractAccountValue(st)
-	if err != nil {
-		return nil, ErrStateNotFound("contract value", fact.Contract().String(), err), nil
-	}
+	if !fact.Sender().Equal(fact.Target()) {
+		ca, err := extstate.StateContractAccountValue(st)
+		if err != nil {
+			return nil, ErrStateNotFound("contract value", fact.Contract().String(), err), nil
+		}
 
-	if !ca.Owner().Equal(fact.Sender()) {
-		return nil, ErrBaseOperationProcess("not contract account owner", fact.Sender().String(), nil), nil
+		if !ca.Owner().Equal(fact.Sender()) {
+			return nil, ErrBaseOperationProcess("not contract account owner, neither token owner", fact.Sender().String(), nil), nil
+		}
 	}
 
 	if err := currencystate.CheckExistsState(currency.StateKeyCurrencyDesign(fact.Currency()), getStateFunc); err != nil {
 		return nil, ErrStateNotFound("currency", fact.Currency().String(), err), nil
 	}
 
-	if err := currencystate.CheckExistsState(currency.StateKeyAccount(fact.Receiver()), getStateFunc); err != nil {
-		return nil, ErrStateNotFound("receiver", fact.Receiver().String(), err), nil
+	if err := currencystate.CheckExistsState(currency.StateKeyAccount(fact.Target()), getStateFunc); err != nil {
+		return nil, ErrStateNotFound("target", fact.Target().String(), err), nil
 	}
 
-	if err := currencystate.CheckNotExistsState(extstate.StateKeyContractAccount(fact.Receiver()), getStateFunc); err != nil {
-		return nil, ErrBaseOperationProcess("contract account cannot receive new tokens", fact.Receiver().String(), err), nil
+	if err := currencystate.CheckNotExistsState(extstate.StateKeyContractAccount(fact.Target()), getStateFunc); err != nil {
+		return nil, ErrBaseOperationProcess("burning tokens of contract accounts is impossible", fact.Target().String(), err), nil
 	}
 
 	g := state.NewStateKeyGenerator(fact.Contract(), fact.TokenID())
 
 	if err := currencystate.CheckExistsState(g.Design(), getStateFunc); err != nil {
 		return nil, ErrStateNotFound("token design", utils.StringerChain(fact.Contract(), fact.TokenID()), err), nil
+	}
+
+	st, err = currencystate.ExistsState(g.TokenBalance(fact.Target()), "key of token balance", getStateFunc)
+	if err != nil {
+		return nil, ErrStateNotFound("token balance", utils.StringerChain(fact.Contract(), fact.TokenID(), fact.Target()), err), nil
+	}
+
+	tb, err := state.StateTokenBalanceValue(st)
+	if err != nil {
+		return nil, ErrStateNotFound("token balance value", utils.StringerChain(fact.Contract(), fact.TokenID(), fact.Target()), err), nil
+	}
+
+	if tb.Compare(fact.Amount()) < 0 {
+		return nil, ErrBaseOperationProcess(
+			fmt.Sprintf("token balance is less than amount to burn, %s < %s", tb, fact.Amount()),
+			utils.StringerChain(fact.Contract(), fact.TokenID(), fact.Target()),
+			err,
+		), nil
 	}
 
 	if err := currencystate.CheckFactSignsByState(fact.Sender(), op.Signs(), getStateFunc); err != nil {
@@ -123,15 +143,15 @@ func (opp *MintProcessor) PreProcess(
 	return ctx, nil, nil
 }
 
-func (opp *MintProcessor) Process(
+func (opp *BurnProcessor) Process(
 	_ context.Context, op base.Operation, getStateFunc base.GetStateFunc) (
 	[]base.StateMergeValue, base.OperationProcessReasonError, error,
 ) {
 	e := util.StringError(ErrStringProcess(*opp))
 
-	fact, ok := op.Fact().(MintFact)
+	fact, ok := op.Fact().(BurnFact)
 	if !ok {
-		return nil, nil, e.Wrap(errors.Errorf(utils.ErrStringTypeCast(MintFact{}, op.Fact())))
+		return nil, nil, e.Wrap(errors.Errorf(utils.ErrStringTypeCast(BurnFact{}, op.Fact())))
 	}
 
 	g := state.NewStateKeyGenerator(fact.Contract(), fact.TokenID())
@@ -147,7 +167,7 @@ func (opp *MintProcessor) Process(
 	}
 
 	policy := types.NewPolicy(
-		design.Policy().TotalSupply().Add(fact.Amount()),
+		design.Policy().TotalSupply().Sub(fact.Amount()),
 		design.Policy().ApproveList(),
 	)
 	if err := policy.IsValid(nil); err != nil {
@@ -172,15 +192,25 @@ func (opp *MintProcessor) Process(
 		state.NewDesignStateValue(design),
 	)
 
+	st, err = currencystate.ExistsState(g.TokenBalance(fact.Target()), "key of token balance", getStateFunc)
+	if err != nil {
+		return nil, ErrStateNotFound("token balance", utils.StringerChain(fact.Contract(), fact.TokenID(), fact.Target()), err), nil
+	}
+
+	tb, err := state.StateTokenBalanceValue(st)
+	if err != nil {
+		return nil, ErrStateNotFound("token balance value", utils.StringerChain(fact.Contract(), fact.TokenID(), fact.Target()), err), nil
+	}
+
 	sts[2] = currencystate.NewStateMergeValue(
-		g.TokenBalance(fact.Receiver()),
-		state.NewTokenBalanceStateValue(fact.Amount()),
+		g.TokenBalance(fact.Target()),
+		state.NewTokenBalanceStateValue(tb.Sub(fact.Amount())),
 	)
 
 	return sts, nil, nil
 }
 
-func (opp *MintProcessor) Close() error {
-	mintProcessorPool.Put(opp)
+func (opp *BurnProcessor) Close() error {
+	burnProcessorPool.Put(opp)
 	return nil
 }
