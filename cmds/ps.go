@@ -5,7 +5,6 @@ import (
 
 	currencycmds "github.com/ProtoconNet/mitum-currency/v3/cmds"
 	"github.com/ProtoconNet/mitum-currency/v3/operation/processor"
-	currencyprocessor "github.com/ProtoconNet/mitum-currency/v3/operation/processor"
 	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum-token/operation/token"
 
@@ -28,18 +27,16 @@ type processorInfo struct {
 func POperationProcessorsMap(pctx context.Context) (context.Context, error) {
 	var isaacParams *isaac.Params
 	var db isaac.Database
-	var opr *currencyprocessor.OperationProcessor
-	var set *hint.CompatibleSet
 
 	if err := util.LoadFromContextOK(pctx,
 		launch.ISAACParamsContextKey, &isaacParams,
 		launch.CenterDatabaseContextKey, &db,
-		currencycmds.OperationProcessorContextKey, &opr,
-		launch.OperationProcessorsMapContextKey, &set,
 	); err != nil {
 		return pctx, err
 	}
 
+	set := hint.NewCompatibleSet[isaac.NewOperationProcessorInternalFunc](1 << 9)
+	opr := processor.NewOperationProcessor()
 	err := opr.SetCheckDuplicationFunc(processor.CheckDuplication)
 	if err != nil {
 		return pctx, err
@@ -50,7 +47,7 @@ func POperationProcessorsMap(pctx context.Context) (context.Context, error) {
 	}
 
 	ps := []processorInfo{
-		processorInfo{token.RegisterTokenHint, token.NewRegisterTokenProcessor()},
+		{token.RegisterTokenHint, token.NewRegisterTokenProcessor()},
 	}
 
 	for _, p := range ps {

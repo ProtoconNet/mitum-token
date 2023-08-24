@@ -103,7 +103,13 @@ func (di *Digester) Digest(blocks []base.BlockMap) {
 func (di *Digester) digest(ctx context.Context, blk base.BlockMap) error {
 	di.Lock()
 	defer di.Unlock()
-	reader, err := isaacblock.NewLocalFSReaderFromHeight(di.localfsRoot, blk.Manifest().Height(), di.database.DatabaseEncoders().Find(jsonenc.JSONEncoderHint))
+
+	enc, found := di.database.DatabaseEncoders().Find(jsonenc.JSONEncoderHint)
+	if !found {
+		return errors.Errorf("encoder not found, %v", enc)
+	}
+
+	reader, err := isaacblock.NewLocalFSReaderFromHeight(di.localfsRoot, blk.Manifest().Height(), enc)
 	if err != nil {
 		return err
 	}

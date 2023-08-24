@@ -153,7 +153,7 @@ func (cmd *RunCommand) run(pctx context.Context) error {
 }
 
 func (cmd *RunCommand) runStates(ctx, pctx context.Context) (func(), error) {
-	var discoveries *util.Locked[[]quicstream.UDPConnInfo]
+	var discoveries *util.Locked[[]quicstream.ConnInfo]
 	var states *isaacstates.States
 
 	if err := util.LoadFromContextOK(pctx,
@@ -323,7 +323,7 @@ func (cmd *RunCommand) runHTTPState(bind string) error {
 }
 
 func (cmd *RunCommand) pDigestAPIHandlers(ctx context.Context) (context.Context, error) {
-	var isaacparams *isaac.Params
+	var isaacparams *launch.LocalParams
 	var local base.LocalNode
 
 	if err := util.LoadFromContextOK(ctx,
@@ -391,7 +391,7 @@ func (cmd *RunCommand) loadCache(_ context.Context, design currencycmds.DigestDe
 
 func (cmd *RunCommand) setDigestDefaultHandlers(
 	ctx context.Context,
-	params *isaac.Params,
+	params *launch.LocalParams,
 	cache currencydigest.Cache,
 	router *mux.Router,
 ) (*currencydigest.Handlers, error) {
@@ -400,7 +400,7 @@ func (cmd *RunCommand) setDigestDefaultHandlers(
 		return nil, err
 	}
 
-	handlers := currencydigest.NewHandlers(ctx, params.NetworkID(), encs, enc, st, cache, router)
+	handlers := currencydigest.NewHandlers(ctx, params.ISAAC.NetworkID(), encs, enc, st, cache, router)
 
 	h, err := cmd.setDigestNetworkClient(ctx, params, handlers)
 	if err != nil {
@@ -413,7 +413,7 @@ func (cmd *RunCommand) setDigestDefaultHandlers(
 
 func (cmd *RunCommand) setDigestHandlers(
 	ctx context.Context,
-	params *isaac.Params,
+	params *launch.LocalParams,
 	cache currencydigest.Cache,
 	router *mux.Router,
 ) (*digest.Handlers, error) {
@@ -422,14 +422,14 @@ func (cmd *RunCommand) setDigestHandlers(
 		return nil, err
 	}
 
-	handlers := digest.NewHandlers(ctx, params.NetworkID(), encs, enc, st, cache, router)
+	handlers := digest.NewHandlers(ctx, params.ISAAC.NetworkID(), encs, enc, st, cache, router)
 
 	return handlers, nil
 }
 
 func (cmd *RunCommand) setDigestNetworkClient(
 	ctx context.Context,
-	params *isaac.Params,
+	params *launch.LocalParams,
 	handlers *currencydigest.Handlers,
 ) (*currencydigest.Handlers, error) {
 	var memberList *quicmemberlist.Memberlist
@@ -437,13 +437,23 @@ func (cmd *RunCommand) setDigestNetworkClient(
 		return nil, err
 	}
 
-	client := launch.NewNetworkClient( //nolint:gomnd //...
+	connectionPool, err := launch.NewConnectionPool(
+		1<<9,
+		params.ISAAC.NetworkID(),
+		nil,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	client := isaacnetwork.NewBaseClient( //nolint:gomnd //...
 		encs, enc,
-		(*params).NetworkID(),
+		connectionPool.Dial,
+		connectionPool.CloseAll,
 	)
 
 	handlers = handlers.SetNetworkClientFunc(
-		func() (*isaacnetwork.QuicstreamClient, *quicmemberlist.Memberlist, error) { // nolint:contextcheck
+		func() (*isaacnetwork.BaseClient, *quicmemberlist.Memberlist, error) { // nolint:contextcheck
 			return client, memberList, nil
 		},
 	)
