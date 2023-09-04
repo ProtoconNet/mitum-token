@@ -98,6 +98,10 @@ func (opp *RegisterTokenProcessor) PreProcess(
 		return nil, ErrBaseOperationProcess("not contract account owner", fact.Sender().String(), nil), nil
 	}
 
+	if ca.IsActive() {
+		return nil, ErrBaseOperationProcess("a design is already registered", fact.Contract().String(), nil), nil
+	}
+
 	if err := currencystate.CheckExistsState(currency.StateKeyCurrencyDesign(fact.Currency()), getStateFunc); err != nil {
 		return nil, ErrStateNotFound("currency", fact.Currency().String(), err), nil
 	}
@@ -134,7 +138,7 @@ func (opp *RegisterTokenProcessor) Process(
 
 	g := state.NewStateKeyGenerator(fact.Contract(), fact.TokenID())
 
-	sts := make([]base.StateMergeValue, 2, 3)
+	sts := make([]base.StateMergeValue, 3, 4)
 
 	v, baseErr, err := calculateCurrencyFee(fact.TokenFact, getStateFunc)
 	if baseErr != nil || err != nil {
@@ -155,6 +159,22 @@ func (opp *RegisterTokenProcessor) Process(
 	sts[1] = currencystate.NewStateMergeValue(
 		g.Design(),
 		state.NewDesignStateValue(design),
+	)
+
+	st, err := currencystate.ExistsState(extstate.StateKeyContractAccount(fact.Contract()), "key of contract account", getStateFunc)
+	if err != nil {
+		return nil, ErrStateNotFound("contract", fact.Contract().String(), err), nil
+	}
+
+	ca, err := extstate.StateContractAccountValue(st)
+	if err != nil {
+		return nil, ErrStateNotFound("contract value", fact.Contract().String(), err), nil
+	}
+	ca.SetIsActive(true)
+
+	sts[2] = currencystate.NewStateMergeValue(
+		extstate.StateKeyContractAccount(fact.Contract()),
+		extstate.NewContractAccountStateValue(ca),
 	)
 
 	if fact.TotalSupply().OverZero() {
