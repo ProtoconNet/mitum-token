@@ -79,14 +79,14 @@ func GetNewProcessor(opr *currencyprocessor.OperationProcessor, op mitumbase.Ope
 	}
 
 	switch t := op.(type) {
-	case currency.CreateAccounts,
-		currency.KeyUpdater,
-		currency.Transfers,
-		extensioncurrency.CreateContractAccounts,
-		extensioncurrency.Withdraws,
-		currency.CurrencyRegister,
-		currency.CurrencyPolicyUpdater,
-		currency.SuffrageInflation,
+	case currency.CreateAccount,
+		currency.UpdateKey,
+		currency.Transfer,
+		extensioncurrency.CreateContractAccount,
+		extensioncurrency.Withdraw,
+		currency.RegisterCurrency,
+		currency.UpdateCurrency,
+		currency.Mint,
 		token.RegisterToken,
 		token.Mint,
 		token.Burn,
