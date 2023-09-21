@@ -101,14 +101,14 @@ func (opp *ApproveProcessor) PreProcess(
 		return nil, ErrBaseOperationProcess("contract cannot become approved account", fact.Approved().String(), err), nil
 	}
 
-	g := state.NewStateKeyGenerator(fact.Contract(), fact.TokenID())
+	g := state.NewStateKeyGenerator(fact.Contract())
 
 	if err := currencystate.CheckExistsState(g.Design(), getStateFunc); err != nil {
-		return nil, ErrStateNotFound("token design", utils.StringerChain(fact.Contract(), fact.TokenID()), err), nil
+		return nil, ErrStateNotFound("token design", fact.Contract().String(), err), nil
 	}
 
 	if err := currencystate.CheckExistsState(g.TokenBalance(fact.Sender()), getStateFunc); err != nil {
-		return nil, ErrStateNotFound("token balance", utils.StringerChain(fact.Contract(), fact.TokenID(), fact.Sender()), err), nil
+		return nil, ErrStateNotFound("token balance", utils.JoinStringers(fact.Contract(), fact.Sender()), err), nil
 	}
 
 	if err := currencystate.CheckFactSignsByState(fact.Sender(), op.Signs(), getStateFunc); err != nil {
@@ -129,7 +129,7 @@ func (opp *ApproveProcessor) Process(
 		return nil, nil, e.Wrap(errors.Errorf(utils.ErrStringTypeCast(ApproveFact{}, op.Fact())))
 	}
 
-	g := state.NewStateKeyGenerator(fact.Contract(), fact.TokenID())
+	g := state.NewStateKeyGenerator(fact.Contract())
 
 	sts := make([]base.StateMergeValue, 2)
 
@@ -141,12 +141,12 @@ func (opp *ApproveProcessor) Process(
 
 	st, err := currencystate.ExistsState(g.Design(), "key of design", getStateFunc)
 	if err != nil {
-		return nil, ErrStateNotFound("token design", utils.StringerChain(fact.Contract(), fact.TokenID()), err), nil
+		return nil, ErrStateNotFound("token design", fact.Contract().String(), err), nil
 	}
 
 	design, err := state.StateDesignValue(st)
 	if err != nil {
-		return nil, ErrStateNotFound("token design value", utils.StringerChain(fact.Contract(), fact.TokenID()), err), nil
+		return nil, ErrStateNotFound("token design value", fact.Contract().String(), err), nil
 	}
 
 	al := design.Policy().ApproveList()
@@ -184,7 +184,7 @@ func (opp *ApproveProcessor) Process(
 		return nil, ErrInvalid(policy, err), nil
 	}
 
-	design = types.NewDesign(design.TokenID(), design.Symbol(), policy)
+	design = types.NewDesign(design.Symbol(), design.Name(), policy)
 	if err := design.IsValid(nil); err != nil {
 		return nil, ErrInvalid(design, err), nil
 	}

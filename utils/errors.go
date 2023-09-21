@@ -40,11 +40,7 @@ func ErrStringDuplicate(name, k string) string {
 	return fmt.Sprintf("duplicate %s found, %s", name, k)
 }
 
-func StringChain(s ...string) string {
-	return strings.Join(s, ", ")
-}
-
-func StringerChain(s ...fmt.Stringer) string {
+func JoinStringers(s ...fmt.Stringer) string {
 	ss := make([]string, len(s))
 	for i, str := range s {
 		ss[i] = str.String()

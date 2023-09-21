@@ -28,15 +28,17 @@ import (
 )
 
 type RunCommand struct { //nolint:govet //...
+	//revive:disable:line-length-limit
 	launch.DesignFlag
 	launch.DevFlags `embed:"" prefix:"dev."`
-	Vault           string                `name:"vault" help:"privatekey path of vault"`
-	Discovery       []launch.ConnInfoFlag `help:"member discovery" placeholder:"ConnInfo"`
-	Hold            launch.HeightFlag     `help:"hold consensus states"`
-	HTTPState       string                `name:"http-state" help:"runtime statistics thru https" placeholder:"bind address"`
-	exitf           func(error)
-	log             *zerolog.Logger
-	holded          bool
+	launch.PrivatekeyFlags
+	Discovery []launch.ConnInfoFlag `help:"member discovery" placeholder:"ConnInfo"`
+	Hold      launch.HeightFlag     `help:"hold consensus states"`
+	HTTPState string                `name:"http-state" help:"runtime statistics thru https" placeholder:"bind address"`
+	exitf     func(error)
+	log       *zerolog.Logger
+	holded    bool
+	//revive:enable:line-length-limit
 }
 
 func (cmd *RunCommand) Run(pctx context.Context) error {
@@ -47,7 +49,7 @@ func (cmd *RunCommand) Run(pctx context.Context) error {
 
 	log.Log().Debug().
 		Interface("design", cmd.DesignFlag).
-		Interface("vault", cmd.Vault).
+		Interface("privatekey", cmd.Privatekey).
 		Interface("discovery", cmd.Discovery).
 		Interface("hold", cmd.Hold).
 		Interface("http_state", cmd.HTTPState).
@@ -62,19 +64,16 @@ func (cmd *RunCommand) Run(pctx context.Context) error {
 		}
 	}
 
-	//revive:disable:modifies-parameter
-	pctx = context.WithValue(pctx, launch.DesignFlagContextKey, cmd.DesignFlag)
-	pctx = context.WithValue(pctx, launch.DevFlagsContextKey, cmd.DevFlags)
-	pctx = context.WithValue(pctx, launch.DiscoveryFlagContextKey, cmd.Discovery)
-	pctx = context.WithValue(pctx, launch.VaultContextKey, cmd.Vault)
-	//revive:enable:modifies-parameter
+	nctx := util.ContextWithValues(pctx, map[util.ContextKey]interface{}{
+		launch.DesignFlagContextKey:     cmd.DesignFlag,
+		launch.DevFlagsContextKey:       cmd.DevFlags,
+		launch.DiscoveryFlagContextKey:  cmd.Discovery,
+		launch.PrivatekeyFromContextKey: cmd.Privatekey,
+	})
 
 	pps := currencycmds.DefaultRunPS()
 
-	_ = pps.AddOK(currencycmds.PNameMongoDBsDataBase, currencycmds.ProcessDatabase, nil, currencycmds.PNameDigestDesign, launch.PNameStorage).
-		AddOK(currencycmds.PNameDigester, ProcessDigester, nil, currencycmds.PNameMongoDBsDataBase).
-		AddOK(currencycmds.PNameDigest, currencycmds.ProcessDigestAPI, nil, currencycmds.PNameDigestDesign, currencycmds.PNameMongoDBsDataBase, launch.PNameMemberlist).
-		AddOK(currencycmds.PNameDigestStart, currencycmds.ProcessStartDigestAPI, nil, currencycmds.PNameDigest).
+	_ = pps.AddOK(currencycmds.PNameDigester, ProcessDigester, nil, currencycmds.PNameMongoDBsDataBase).
 		AddOK(currencycmds.PNameStartDigester, ProcessStartDigester, nil, currencycmds.PNameDigestStart)
 	_ = pps.POK(launch.PNameStorage).PostAddOK(ps.Name("check-hold"), cmd.pCheckHold)
 	_ = pps.POK(launch.PNameStates).
@@ -92,7 +91,7 @@ func (cmd *RunCommand) Run(pctx context.Context) error {
 
 	log.Log().Debug().Interface("process", pps.Verbose()).Msg("process ready")
 
-	pctx, err := pps.Run(pctx) //revive:disable-line:modifies-parameter
+	nctx, err := pps.Run(nctx) //revive:disable-line:modifies-parameter
 	defer func() {
 		log.Log().Debug().Interface("process", pps.Verbose()).Msg("process will be closed")
 
@@ -110,7 +109,7 @@ func (cmd *RunCommand) Run(pctx context.Context) error {
 		Interface("hold", cmd.Hold.Height()).
 		Msg("node started")
 
-	return cmd.run(pctx)
+	return cmd.run(nctx)
 }
 
 var errHoldStop = util.NewIDError("hold stop")
@@ -138,14 +137,14 @@ func (cmd *RunCommand) run(pctx context.Context) error {
 
 	select {
 	case <-ctx.Done(): // NOTE graceful stop
-		return ctx.Err()
+		return errors.WithStack(ctx.Err())
 	case err := <-exitch:
 		if errors.Is(err, errHoldStop) {
 			stopstates()
 
 			<-ctx.Done()
 
-			return ctx.Err()
+			return errors.WithStack(ctx.Err())
 		}
 
 		return err
@@ -323,12 +322,12 @@ func (cmd *RunCommand) runHTTPState(bind string) error {
 }
 
 func (cmd *RunCommand) pDigestAPIHandlers(ctx context.Context) (context.Context, error) {
-	var isaacparams *launch.LocalParams
+	var params *launch.LocalParams
 	var local base.LocalNode
 
 	if err := util.LoadFromContextOK(ctx,
 		launch.LocalContextKey, &local,
-		launch.ISAACParamsContextKey, &isaacparams,
+		launch.LocalParamsContextKey, &params,
 	); err != nil {
 		return nil, err
 	}
@@ -357,7 +356,7 @@ func (cmd *RunCommand) pDigestAPIHandlers(ctx context.Context) (context.Context,
 	}
 	router := dnt.Router()
 
-	defaultHandlers, err := cmd.setDigestDefaultHandlers(ctx, isaacparams, cache, router)
+	defaultHandlers, err := cmd.setDigestDefaultHandlers(ctx, params, cache, router)
 	if err != nil {
 		return ctx, err
 	}
@@ -366,7 +365,7 @@ func (cmd *RunCommand) pDigestAPIHandlers(ctx context.Context) (context.Context,
 		return ctx, err
 	}
 
-	handlers, err := cmd.setDigestHandlers(ctx, isaacparams, cache, router)
+	handlers, err := cmd.setDigestHandlers(ctx, params, cache, router)
 	if err != nil {
 		return ctx, err
 	}

@@ -110,10 +110,10 @@ func (opp *MintProcessor) PreProcess(
 		return nil, ErrBaseOperationProcess("contract account cannot receive new tokens", fact.Receiver().String(), err), nil
 	}
 
-	g := state.NewStateKeyGenerator(fact.Contract(), fact.TokenID())
+	g := state.NewStateKeyGenerator(fact.Contract())
 
 	if err := currencystate.CheckExistsState(g.Design(), getStateFunc); err != nil {
-		return nil, ErrStateNotFound("token design", utils.StringerChain(fact.Contract(), fact.TokenID()), err), nil
+		return nil, ErrStateNotFound("token design", fact.Contract().String(), err), nil
 	}
 
 	if err := currencystate.CheckFactSignsByState(fact.Sender(), op.Signs(), getStateFunc); err != nil {
@@ -134,7 +134,7 @@ func (opp *MintProcessor) Process(
 		return nil, nil, e.Wrap(errors.Errorf(utils.ErrStringTypeCast(MintFact{}, op.Fact())))
 	}
 
-	g := state.NewStateKeyGenerator(fact.Contract(), fact.TokenID())
+	g := state.NewStateKeyGenerator(fact.Contract())
 
 	sts := make([]base.StateMergeValue, 3)
 
@@ -146,12 +146,12 @@ func (opp *MintProcessor) Process(
 
 	st, err := currencystate.ExistsState(g.Design(), "key of design", getStateFunc)
 	if err != nil {
-		return nil, ErrStateNotFound("token design", utils.StringerChain(fact.Contract(), fact.TokenID()), err), nil
+		return nil, ErrStateNotFound("token design", fact.Contract().String(), err), nil
 	}
 
 	design, err := state.StateDesignValue(st)
 	if err != nil {
-		return nil, ErrStateNotFound("token design value", utils.StringerChain(fact.Contract(), fact.TokenID()), err), nil
+		return nil, ErrStateNotFound("token design value", fact.Contract().String(), err), nil
 	}
 
 	policy := types.NewPolicy(
@@ -162,7 +162,7 @@ func (opp *MintProcessor) Process(
 		return nil, ErrInvalid(policy, err), nil
 	}
 
-	design = types.NewDesign(design.TokenID(), design.Symbol(), policy)
+	design = types.NewDesign(design.Symbol(), design.Name(), policy)
 	if err := design.IsValid(nil); err != nil {
 		return nil, ErrInvalid(design, err), nil
 	}

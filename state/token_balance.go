@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/ProtoconNet/mitum-currency/v3/common"
-	currencytypes "github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum-token/utils"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
@@ -67,6 +66,6 @@ func StateTokenBalanceValue(st base.State) (common.Big, error) {
 	return s.amount, nil
 }
 
-func StateKeyTokenBalance(contract base.Address, tokenID currencytypes.CurrencyID, address base.Address) string {
-	return fmt.Sprintf("%s:%s:%s", StateKeyTokenPrefix(contract, tokenID), address, TokenBalanceSuffix)
+func StateKeyTokenBalance(contract base.Address, address base.Address) string {
+	return fmt.Sprintf("%s:%s:%s", StateKeyTokenPrefix(contract), address, TokenBalanceSuffix)
 }

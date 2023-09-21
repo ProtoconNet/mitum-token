@@ -112,26 +112,26 @@ func (opp *BurnProcessor) PreProcess(
 		return nil, ErrBaseOperationProcess("burning tokens of contract accounts is impossible", fact.Target().String(), err), nil
 	}
 
-	g := state.NewStateKeyGenerator(fact.Contract(), fact.TokenID())
+	g := state.NewStateKeyGenerator(fact.Contract())
 
 	if err := currencystate.CheckExistsState(g.Design(), getStateFunc); err != nil {
-		return nil, ErrStateNotFound("token design", utils.StringerChain(fact.Contract(), fact.TokenID()), err), nil
+		return nil, ErrStateNotFound("token design", fact.Contract().String(), err), nil
 	}
 
 	st, err = currencystate.ExistsState(g.TokenBalance(fact.Target()), "key of token balance", getStateFunc)
 	if err != nil {
-		return nil, ErrStateNotFound("token balance", utils.StringerChain(fact.Contract(), fact.TokenID(), fact.Target()), err), nil
+		return nil, ErrStateNotFound("token balance", utils.JoinStringers(fact.Contract(), fact.Target()), err), nil
 	}
 
 	tb, err := state.StateTokenBalanceValue(st)
 	if err != nil {
-		return nil, ErrStateNotFound("token balance value", utils.StringerChain(fact.Contract(), fact.TokenID(), fact.Target()), err), nil
+		return nil, ErrStateNotFound("token balance value", utils.JoinStringers(fact.Contract(), fact.Target()), err), nil
 	}
 
 	if tb.Compare(fact.Amount()) < 0 {
 		return nil, ErrBaseOperationProcess(
 			fmt.Sprintf("token balance is less than amount to burn, %s < %s", tb, fact.Amount()),
-			utils.StringerChain(fact.Contract(), fact.TokenID(), fact.Target()),
+			utils.JoinStringers(fact.Contract(), fact.Target()),
 			err,
 		), nil
 	}
@@ -154,7 +154,7 @@ func (opp *BurnProcessor) Process(
 		return nil, nil, e.Wrap(errors.Errorf(utils.ErrStringTypeCast(BurnFact{}, op.Fact())))
 	}
 
-	g := state.NewStateKeyGenerator(fact.Contract(), fact.TokenID())
+	g := state.NewStateKeyGenerator(fact.Contract())
 
 	sts := make([]base.StateMergeValue, 3)
 
@@ -166,12 +166,12 @@ func (opp *BurnProcessor) Process(
 
 	st, err := currencystate.ExistsState(g.Design(), "key of design", getStateFunc)
 	if err != nil {
-		return nil, ErrStateNotFound("token design", utils.StringerChain(fact.Contract(), fact.TokenID()), err), nil
+		return nil, ErrStateNotFound("token design", utils.JoinStringers(fact.Contract()), err), nil
 	}
 
 	design, err := state.StateDesignValue(st)
 	if err != nil {
-		return nil, ErrStateNotFound("token design value", utils.StringerChain(fact.Contract(), fact.TokenID()), err), nil
+		return nil, ErrStateNotFound("token design value", utils.JoinStringers(fact.Contract()), err), nil
 	}
 
 	policy := types.NewPolicy(
@@ -182,7 +182,7 @@ func (opp *BurnProcessor) Process(
 		return nil, ErrInvalid(policy, err), nil
 	}
 
-	design = types.NewDesign(design.TokenID(), design.Symbol(), policy)
+	design = types.NewDesign(design.Symbol(), design.Name(), policy)
 	if err := design.IsValid(nil); err != nil {
 		return nil, ErrInvalid(design, err), nil
 	}
@@ -194,12 +194,12 @@ func (opp *BurnProcessor) Process(
 
 	st, err = currencystate.ExistsState(g.TokenBalance(fact.Target()), "key of token balance", getStateFunc)
 	if err != nil {
-		return nil, ErrStateNotFound("token balance", utils.StringerChain(fact.Contract(), fact.TokenID(), fact.Target()), err), nil
+		return nil, ErrStateNotFound("token balance", utils.JoinStringers(fact.Contract(), fact.Target()), err), nil
 	}
 
 	tb, err := state.StateTokenBalanceValue(st)
 	if err != nil {
-		return nil, ErrStateNotFound("token balance value", utils.StringerChain(fact.Contract(), fact.TokenID(), fact.Target()), err), nil
+		return nil, ErrStateNotFound("token balance value", utils.JoinStringers(fact.Contract(), fact.Target()), err), nil
 	}
 
 	sts[2] = currencystate.NewStateMergeValue(

@@ -12,16 +12,16 @@ var DesignHint = hint.MustNewHint("mitum-token-design-v0.0.1")
 
 type Design struct {
 	hint.BaseHinter
-	tokenID types.CurrencyID
-	symbol  string
-	policy  Policy
+	symbol types.CurrencyID
+	name   string
+	policy Policy
 }
 
-func NewDesign(tokenID types.CurrencyID, symbol string, policy Policy) Design {
+func NewDesign(symbol types.CurrencyID, name string, policy Policy) Design {
 	return Design{
 		BaseHinter: hint.NewBaseHinter(DesignHint),
-		tokenID:    tokenID,
 		symbol:     symbol,
+		name:       name,
 		policy:     policy,
 	}
 }
@@ -31,13 +31,13 @@ func (d Design) IsValid([]byte) error {
 
 	if err := util.CheckIsValiders(nil, false,
 		d.BaseHinter,
-		d.tokenID,
+		d.symbol,
 		d.policy,
 	); err != nil {
 		return e.Wrap(err)
 	}
 
-	if d.symbol == "" {
+	if d.name == "" {
 		return e.Wrap(errors.Errorf("empty symbol"))
 	}
 
@@ -46,18 +46,18 @@ func (d Design) IsValid([]byte) error {
 
 func (d Design) Bytes() []byte {
 	return util.ConcatBytesSlice(
-		d.tokenID.Bytes(),
-		[]byte(d.symbol),
+		d.symbol.Bytes(),
+		[]byte(d.name),
 		d.policy.Bytes(),
 	)
 }
 
-func (d Design) TokenID() types.CurrencyID {
-	return d.tokenID
+func (d Design) Symbol() types.CurrencyID {
+	return d.symbol
 }
 
-func (d Design) Symbol() string {
-	return d.symbol
+func (d Design) Name() string {
+	return d.name
 }
 
 func (d Design) Policy() Policy {

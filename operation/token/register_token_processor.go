@@ -106,15 +106,15 @@ func (opp *RegisterTokenProcessor) PreProcess(
 		return nil, ErrStateNotFound("currency", fact.Currency().String(), err), nil
 	}
 
-	g := state.NewStateKeyGenerator(fact.Contract(), fact.TokenID())
+	g := state.NewStateKeyGenerator(fact.Contract())
 
 	if err := currencystate.CheckNotExistsState(g.Design(), getStateFunc); err != nil {
-		return nil, ErrStateAlreadyExists("token design", utils.StringerChain(fact.Contract(), fact.TokenID()), err), nil
+		return nil, ErrStateAlreadyExists("token design", fact.Contract().String(), err), nil
 	}
 
 	if fact.TotalSupply().OverZero() {
 		if err := currencystate.CheckNotExistsState(g.TokenBalance(ca.Owner()), getStateFunc); err != nil {
-			return nil, ErrStateAlreadyExists("token balance", utils.StringerChain(fact.Contract(), fact.TokenID(), ca.Owner()), err), nil
+			return nil, ErrStateAlreadyExists("token balance", utils.JoinStringers(fact.Contract(), ca.Owner()), err), nil
 		}
 	}
 
@@ -136,7 +136,7 @@ func (opp *RegisterTokenProcessor) Process(
 		return nil, nil, e.Wrap(errors.Errorf(utils.ErrStringTypeCast(RegisterTokenFact{}, op.Fact())))
 	}
 
-	g := state.NewStateKeyGenerator(fact.Contract(), fact.TokenID())
+	g := state.NewStateKeyGenerator(fact.Contract())
 
 	sts := make([]base.StateMergeValue, 3, 4)
 
@@ -151,7 +151,7 @@ func (opp *RegisterTokenProcessor) Process(
 		return nil, ErrInvalid(policy, err), nil
 	}
 
-	design := types.NewDesign(fact.TokenID(), fact.Symbol(), policy)
+	design := types.NewDesign(fact.Symbol(), fact.Name(), policy)
 	if err := design.IsValid(nil); err != nil {
 		return nil, ErrInvalid(design, err), nil
 	}

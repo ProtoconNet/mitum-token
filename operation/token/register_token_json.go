@@ -2,6 +2,7 @@ package token
 
 import (
 	"github.com/ProtoconNet/mitum-currency/v3/common"
+	currencytypes "github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum-token/utils"
 	"github.com/ProtoconNet/mitum2/util"
 	jsonenc "github.com/ProtoconNet/mitum2/util/encoder/json"
@@ -9,20 +10,23 @@ import (
 
 type RegisterTokenFactJSONMarshaler struct {
 	TokenFactJSONMarshaler
-	Symbol      string     `json:"symbol"`
-	TotalSupply common.Big `json:"total_supply"`
+	Symbol      currencytypes.CurrencyID `json:"symbol"`
+	Name        string                   `json:"name"`
+	TotalSupply common.Big               `json:"total_supply"`
 }
 
 func (fact RegisterTokenFact) MarshalJSON() ([]byte, error) {
 	return util.MarshalJSON(RegisterTokenFactJSONMarshaler{
 		TokenFactJSONMarshaler: fact.TokenFact.JSONMarshaler(),
 		Symbol:                 fact.symbol,
+		Name:                   fact.name,
 		TotalSupply:            fact.totalSupply,
 	})
 }
 
 type RegisterTokenFactJSONUnMarshaler struct {
 	Symbol      string `json:"symbol"`
+	Name        string `json:"name"`
 	TotalSupply string `json:"total_supply"`
 }
 
@@ -40,6 +44,7 @@ func (fact *RegisterTokenFact) DecodeJSON(b []byte, enc *jsonenc.Encoder) error 
 
 	return fact.unmarshal(enc,
 		uf.Symbol,
+		uf.Name,
 		uf.TotalSupply,
 	)
 }

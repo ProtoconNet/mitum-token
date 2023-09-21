@@ -10,7 +10,6 @@ import (
 
 func (fact ApproveFact) MarshalBSON() ([]byte, error) {
 	m := fact.TokenFact.marshalMap()
-
 	m["approved"] = fact.approved
 	m["amount"] = fact.amount
 

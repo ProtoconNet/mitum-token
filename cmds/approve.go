@@ -19,13 +19,6 @@ type ApproveCommand struct {
 	approved base.Address
 }
 
-func NewApproveCommand() ApproveCommand {
-	cmd := NewOperationCommand()
-	return ApproveCommand{
-		OperationCommand: *cmd,
-	}
-}
-
 func (cmd *ApproveCommand) Run(pctx context.Context) error { // nolint:dupl
 	if _, err := cmd.prepare(pctx); err != nil {
 		return err
@@ -68,13 +61,13 @@ func (cmd *ApproveCommand) createOperation() (base.Operation, error) { // nolint
 	fact := token.NewApproveFact(
 		[]byte(cmd.Token),
 		cmd.sender, cmd.contract,
-		cmd.TokenID.CID, cmd.Currency.CID,
+		cmd.Currency.CID,
 		cmd.approved,
 		cmd.Amount.Big,
 	)
 
 	op := token.NewApprove(fact)
-	if err := op.HashSign(cmd.Privatekey, cmd.NetworkID.NetworkID()); err != nil {
+	if err := op.Sign(cmd.Privatekey, cmd.NetworkID.NetworkID()); err != nil {
 		return nil, e.Wrap(err)
 	}
 

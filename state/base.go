@@ -3,32 +3,29 @@ package state
 import (
 	"fmt"
 
-	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
 )
 
 var TokenPrefix = "token"
 
-func StateKeyTokenPrefix(contract base.Address, tokenID types.CurrencyID) string {
-	return fmt.Sprintf("%s:%s:%s", TokenPrefix, contract, tokenID)
+func StateKeyTokenPrefix(contract base.Address) string {
+	return fmt.Sprintf("%s:%s", TokenPrefix, contract)
 }
 
 type StateKeyGenerator struct {
 	contract base.Address
-	tokenID  types.CurrencyID
 }
 
-func NewStateKeyGenerator(contract base.Address, tokenID types.CurrencyID) StateKeyGenerator {
+func NewStateKeyGenerator(contract base.Address) StateKeyGenerator {
 	return StateKeyGenerator{
 		contract,
-		tokenID,
 	}
 }
 
 func (g StateKeyGenerator) Design() string {
-	return StateKeyDesign(g.contract, g.tokenID)
+	return StateKeyDesign(g.contract)
 }
 
 func (g StateKeyGenerator) TokenBalance(address base.Address) string {
-	return StateKeyTokenBalance(g.contract, g.tokenID, address)
+	return StateKeyTokenBalance(g.contract, address)
 }

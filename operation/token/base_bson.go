@@ -16,7 +16,6 @@ func (fact TokenFact) marshalMap() map[string]interface{} {
 		"_hint":    fact.Hint().String(),
 		"sender":   fact.sender,
 		"contract": fact.contract,
-		"token_id": fact.tokenID,
 		"currency": fact.currency,
 		"hash":     fact.BaseFact.Hash().String(),
 		"token":    fact.BaseFact.Token(),
@@ -29,7 +28,6 @@ func (fact TokenFact) MarshalBSON() ([]byte, error) {
 			"_hint":    fact.Hint().String(),
 			"sender":   fact.sender,
 			"contract": fact.contract,
-			"token_id": fact.tokenID,
 			"currency": fact.currency,
 			"hash":     fact.BaseFact.Hash().String(),
 			"token":    fact.BaseFact.Token(),
@@ -41,7 +39,6 @@ type TokenFactBSONUnmarshaler struct {
 	Hint     string `bson:"_hint"`
 	Sender   string `bson:"sender"`
 	Contract string `bson:"contract"`
-	TokenID  string `bson:"token_id"`
 	Currency string `bson:"currency"`
 }
 
@@ -71,30 +68,29 @@ func (fact *TokenFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 	return fact.unmarshal(enc,
 		uf.Sender,
 		uf.Contract,
-		uf.TokenID,
 		uf.Currency,
 	)
 }
 
-func (op TokenOperation) MarshalBSON() ([]byte, error) {
-	return bsonenc.Marshal(
-		bson.M{
-			"_hint": op.Hint().String(),
-			"hash":  op.Hash().String(),
-			"fact":  op.Fact(),
-			"signs": op.Signs(),
-		})
-}
-
-func (op *TokenOperation) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError(utils.ErrStringDecodeBSON(*op))
-
-	var ubo common.BaseOperation
-	if err := ubo.DecodeBSON(b, enc); err != nil {
-		return e.Wrap(err)
-	}
-
-	op.BaseOperation = ubo
-
-	return nil
-}
+//func (op TokenOperation) MarshalBSON() ([]byte, error) {
+//	return bsonenc.Marshal(
+//		bson.M{
+//			"_hint": op.Hint().String(),
+//			"hash":  op.Hash().String(),
+//			"fact":  op.Fact(),
+//			"signs": op.Signs(),
+//		})
+//}
+//
+//func (op *TokenOperation) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
+//	e := util.StringError(utils.ErrStringDecodeBSON(*op))
+//
+//	var ubo common.BaseOperation
+//	if err := ubo.DecodeBSON(b, enc); err != nil {
+//		return e.Wrap(err)
+//	}
+//
+//	op.BaseOperation = ubo
+//
+//	return nil
+//}

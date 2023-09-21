@@ -2,13 +2,13 @@ package cmds
 
 import (
 	"context"
+	"fmt"
+	"github.com/ProtoconNet/mitum2/base"
+	"github.com/pkg/errors"
 	"io"
 	"os"
 
 	currencycmds "github.com/ProtoconNet/mitum-currency/v3/cmds"
-	"github.com/pkg/errors"
-
-	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/launch"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/encoder"
@@ -23,12 +23,6 @@ type BaseCommand struct {
 	Encoders *encoder.Encoders
 	Log      *zerolog.Logger
 	Out      io.Writer `kong:"-"`
-}
-
-func NewBaseCommand() *BaseCommand {
-	return &BaseCommand{
-		Out: os.Stdout,
-	}
 }
 
 func (cmd *BaseCommand) prepare(pctx context.Context) (context.Context, error) {
@@ -59,8 +53,13 @@ func (cmd *BaseCommand) prepare(pctx context.Context) (context.Context, error) {
 	)
 }
 
+func (cmd *BaseCommand) print(f string, a ...interface{}) {
+	_, _ = fmt.Fprintf(cmd.Out, f, a...)
+	_, _ = fmt.Fprintln(cmd.Out)
+}
+
 func PAddHinters(ctx context.Context) (context.Context, error) {
-	e := util.StringError("failed to add hinters")
+	e := util.StringError("add hinters")
 
 	var enc encoder.Encoder
 	if err := util.LoadFromContextOK(ctx, launch.EncoderContextKey, &enc); err != nil {
@@ -87,17 +86,9 @@ type OperationCommand struct {
 	currencycmds.OperationFlags
 	Sender   currencycmds.AddressFlag    `arg:"" name:"sender" help:"sender address" required:"true"`
 	Contract currencycmds.AddressFlag    `arg:"" name:"contract" help:"contract address to register token" required:"true"`
-	TokenID  currencycmds.CurrencyIDFlag `arg:"" name:"token-id" help:"token id" required:"true"`
 	Currency currencycmds.CurrencyIDFlag `arg:"" name:"currency" help:"currency id" required:"true"`
 	sender   base.Address
 	contract base.Address
-}
-
-func NewOperationCommand() *OperationCommand {
-	cmd := NewBaseCommand()
-	return &OperationCommand{
-		BaseCommand: *cmd,
-	}
 }
 
 func (cmd *OperationCommand) parseFlags() error {

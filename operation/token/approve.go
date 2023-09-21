@@ -24,13 +24,13 @@ type ApproveFact struct {
 func NewApproveFact(
 	token []byte,
 	sender, contract base.Address,
-	tokenID, currency currencytypes.CurrencyID,
+	currency currencytypes.CurrencyID,
 	approved base.Address,
 	amount common.Big,
 ) ApproveFact {
 	fact := ApproveFact{
 		TokenFact: NewTokenFact(
-			base.NewBaseFact(ApproveFactHint, token), sender, contract, tokenID, currency,
+			base.NewBaseFact(ApproveFactHint, token), sender, contract, currency,
 		),
 		approved: approved,
 		amount:   amount,
@@ -78,9 +78,9 @@ func (fact ApproveFact) Amount() common.Big {
 }
 
 type Approve struct {
-	TokenOperation
+	common.BaseOperation
 }
 
 func NewApprove(fact ApproveFact) Approve {
-	return Approve{TokenOperation: NewTokenOperation(ApproveHint, fact)}
+	return Approve{BaseOperation: common.NewBaseOperation(ApproveHint, fact)}
 }

@@ -3,7 +3,6 @@ package state
 import (
 	"fmt"
 
-	currencytypes "github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum-token/types"
 	"github.com/ProtoconNet/mitum-token/utils"
 	"github.com/ProtoconNet/mitum2/base"
@@ -67,6 +66,6 @@ func StateDesignValue(st base.State) (types.Design, error) {
 	return s.design, nil
 }
 
-func StateKeyDesign(contract base.Address, tokenID currencytypes.CurrencyID) string {
-	return fmt.Sprintf("%s:%s", StateKeyTokenPrefix(contract, tokenID), DesignSuffix)
+func StateKeyDesign(contract base.Address) string {
+	return fmt.Sprintf("%s:%s", StateKeyTokenPrefix(contract), DesignSuffix)
 }

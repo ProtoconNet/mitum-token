@@ -9,12 +9,12 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (d *Design) unmarshal(enc encoder.Encoder, ht hint.Hint, t, s string, bp []byte) error {
+func (d *Design) unmarshal(enc encoder.Encoder, ht hint.Hint, symbol, name string, bp []byte) error {
 	e := util.StringError(utils.ErrStringUnmarshal(*d))
 
 	d.BaseHinter = hint.NewBaseHinter(ht)
-	d.tokenID = types.CurrencyID(t)
-	d.symbol = s
+	d.symbol = types.CurrencyID(symbol)
+	d.name = name
 
 	if hinter, err := enc.Decode(bp); err != nil {
 		return e.Wrap(err)

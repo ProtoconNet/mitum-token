@@ -8,7 +8,6 @@ import (
 	"github.com/ProtoconNet/mitum-token/utils"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
-	"github.com/ProtoconNet/mitum2/util/hint"
 	"github.com/ProtoconNet/mitum2/util/valuehash"
 	"github.com/pkg/errors"
 )
@@ -17,20 +16,18 @@ type TokenFact struct {
 	base.BaseFact
 	sender   base.Address
 	contract base.Address
-	tokenID  types.CurrencyID
 	currency types.CurrencyID
 }
 
 func NewTokenFact(
 	baseFact base.BaseFact,
 	sender, contract base.Address,
-	tokenID, currency types.CurrencyID,
+	currency types.CurrencyID,
 ) TokenFact {
 	return TokenFact{
 		baseFact,
 		sender,
 		contract,
-		tokenID,
 		currency,
 	}
 }
@@ -46,7 +43,6 @@ func (fact TokenFact) IsValid([]byte) error {
 		fact.BaseFact,
 		fact.sender,
 		fact.contract,
-		fact.tokenID,
 		fact.currency,
 	); err != nil {
 		return e.Wrap(err)
@@ -64,7 +60,6 @@ func (fact TokenFact) Bytes() []byte {
 		fact.Token(),
 		fact.sender.Bytes(),
 		fact.contract.Bytes(),
-		fact.tokenID.Bytes(),
 		fact.currency.Bytes(),
 	)
 }
@@ -77,10 +72,6 @@ func (fact TokenFact) Contract() base.Address {
 	return fact.contract
 }
 
-func (fact TokenFact) TokenID() types.CurrencyID {
-	return fact.tokenID
-}
-
 func (fact TokenFact) Currency() types.CurrencyID {
 	return fact.currency
 }
@@ -89,17 +80,17 @@ func (fact TokenFact) Addresses() []base.Address {
 	return []base.Address{fact.sender, fact.contract}
 }
 
-type TokenOperation struct {
-	common.BaseOperation
-}
-
-func NewTokenOperation(ht hint.Hint, fact base.Fact) TokenOperation {
-	return TokenOperation{BaseOperation: common.NewBaseOperation(ht, fact)}
-}
-
-func (op *TokenOperation) HashSign(priv base.Privatekey, networkID base.NetworkID) error {
-	return op.Sign(priv, networkID)
-}
+//type TokenOperation struct {
+//	common.BaseOperation
+//}
+//
+//func NewTokenOperation(ht hint.Hint, fact base.Fact) TokenOperation {
+//	return TokenOperation{BaseOperation: common.NewBaseOperation(ht, fact)}
+//}
+//
+//func (op *TokenOperation) HashSign(priv base.Privatekey, networkID base.NetworkID) error {
+//	return op.Sign(priv, networkID)
+//}
 
 func calculateCurrencyFee(fact TokenFact, getStateFunc base.GetStateFunc) (
 	base.StateMergeValue, base.OperationProcessReasonError, error,
@@ -118,15 +109,15 @@ func calculateCurrencyFee(fact TokenFact, getStateFunc base.GetStateFunc) (
 
 	st, err := state.ExistsState(currencystate.StateKeyBalance(sender, currency), "key of currency balance", getStateFunc)
 	if err != nil {
-		return nil, ErrStateNotFound("currency balance", utils.StringerChain(sender, currency), err), nil
+		return nil, ErrStateNotFound("currency balance", utils.JoinStringers(sender, currency), err), nil
 	}
 	sb := state.NewStateMergeValue(st.Key(), st.Value())
 
 	switch b, err := currencystate.StateBalanceValue(st); {
 	case err != nil:
-		return nil, ErrBaseOperationProcess("failed to get balance value", utils.StringerChain(sender, currency), err), nil
+		return nil, ErrBaseOperationProcess("failed to get balance value", utils.JoinStringers(sender, currency), err), nil
 	case b.Big().Compare(fee) < 0:
-		return nil, ErrBaseOperationProcess("not enough balance of sender", utils.StringerChain(sender, currency), err), nil
+		return nil, ErrBaseOperationProcess("not enough balance of sender", utils.JoinStringers(sender, currency), err), nil
 	}
 
 	v, ok := sb.Value().(currencystate.BalanceStateValue)

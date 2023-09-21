@@ -12,6 +12,7 @@ func (fact RegisterTokenFact) MarshalBSON() ([]byte, error) {
 	m := fact.TokenFact.marshalMap()
 
 	m["symbol"] = fact.symbol
+	m["name"] = fact.name
 	m["total_supply"] = fact.totalSupply
 
 	return bsonenc.Marshal(m)
@@ -19,6 +20,7 @@ func (fact RegisterTokenFact) MarshalBSON() ([]byte, error) {
 
 type RegisterTokenFactBSONUnmarshaler struct {
 	Symbol      string `bson:"symbol"`
+	Name        string `bson:"name"`
 	TotalSupply string `bson:"total_supply"`
 }
 
@@ -36,6 +38,7 @@ func (fact *RegisterTokenFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error 
 
 	return fact.unmarshal(enc,
 		uf.Symbol,
+		uf.Name,
 		uf.TotalSupply,
 	)
 }

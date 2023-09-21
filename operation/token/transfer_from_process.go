@@ -109,16 +109,16 @@ func (opp *TransferFromProcessor) PreProcess(
 		return nil, ErrBaseOperationProcess("contract account cannot be target of transfer-from", fact.Receiver().String(), err), nil
 	}
 
-	g := state.NewStateKeyGenerator(fact.Contract(), fact.TokenID())
+	g := state.NewStateKeyGenerator(fact.Contract())
 
 	st, err := currencystate.ExistsState(g.Design(), "key of design", getStateFunc)
 	if err != nil {
-		return nil, ErrStateNotFound("token design", utils.StringerChain(fact.Contract(), fact.TokenID()), err), nil
+		return nil, ErrStateNotFound("token design", fact.Contract().String(), err), nil
 	}
 
 	design, err := state.StateDesignValue(st)
 	if err != nil {
-		return nil, ErrStateNotFound("token design value", utils.StringerChain(fact.Contract(), fact.TokenID()), err), nil
+		return nil, ErrStateNotFound("token design value", fact.Contract().String(), err), nil
 	}
 
 	al := design.Policy().ApproveList()
@@ -134,7 +134,7 @@ func (opp *TransferFromProcessor) PreProcess(
 	if idx < 0 {
 		return nil, ErrBaseOperationProcess(
 			"sender is not approved account of target",
-			utils.StringerChain(fact.Contract(), fact.TokenID(), fact.Sender(), fact.Target()),
+			utils.JoinStringers(fact.Contract(), fact.Sender(), fact.Target()),
 			err,
 		), nil
 	}
@@ -143,7 +143,7 @@ func (opp *TransferFromProcessor) PreProcess(
 	if !found {
 		return nil, ErrBaseOperationProcess(
 			"sender is not approved account of target",
-			utils.StringerChain(fact.Contract(), fact.TokenID(), fact.Sender(), fact.Target()),
+			utils.JoinStringers(fact.Contract(), fact.Sender(), fact.Target()),
 			err,
 		), nil
 	}
@@ -151,25 +151,25 @@ func (opp *TransferFromProcessor) PreProcess(
 	if big.Compare(fact.Amount()) < 0 {
 		return nil, ErrBaseOperationProcess(
 			fmt.Sprintf("approved amount is less than amount to transfer, %s < %s", big, fact.Amount()),
-			utils.StringerChain(fact.Contract(), fact.TokenID(), fact.Sender(), fact.Target()),
+			utils.JoinStringers(fact.Contract(), fact.Sender(), fact.Target()),
 			err,
 		), nil
 	}
 
 	st, err = currencystate.ExistsState(g.TokenBalance(fact.Target()), "key of token balance", getStateFunc)
 	if err != nil {
-		return nil, ErrStateNotFound("token balance", utils.StringerChain(fact.Contract(), fact.TokenID(), fact.Target()), err), nil
+		return nil, ErrStateNotFound("token balance", utils.JoinStringers(fact.Contract(), fact.Target()), err), nil
 	}
 
 	tb, err := state.StateTokenBalanceValue(st)
 	if err != nil {
-		return nil, ErrStateNotFound("token balance value", utils.StringerChain(fact.Contract(), fact.TokenID(), fact.Target()), err), nil
+		return nil, ErrStateNotFound("token balance value", utils.JoinStringers(fact.Contract(), fact.Target()), err), nil
 	}
 
 	if tb.Compare(fact.Amount()) < 0 {
 		return nil, ErrBaseOperationProcess(
 			fmt.Sprintf("token balance is less than amount to transfer, %s < %s", tb, fact.Amount()),
-			utils.StringerChain(fact.Contract(), fact.TokenID(), fact.Target()),
+			utils.JoinStringers(fact.Contract(), fact.Target()),
 			err,
 		), nil
 	}
@@ -192,7 +192,7 @@ func (opp *TransferFromProcessor) Process(
 		return nil, nil, e.Wrap(errors.Errorf(utils.ErrStringTypeCast(TransferFromFact{}, op.Fact())))
 	}
 
-	g := state.NewStateKeyGenerator(fact.Contract(), fact.TokenID())
+	g := state.NewStateKeyGenerator(fact.Contract())
 
 	sts := make([]base.StateMergeValue, 4)
 
@@ -204,12 +204,12 @@ func (opp *TransferFromProcessor) Process(
 
 	st, err := currencystate.ExistsState(g.Design(), "key of design", getStateFunc)
 	if err != nil {
-		return nil, ErrStateNotFound("token design", utils.StringerChain(fact.Contract(), fact.TokenID()), err), nil
+		return nil, ErrStateNotFound("token design", fact.Contract().String(), err), nil
 	}
 
 	design, err := state.StateDesignValue(st)
 	if err != nil {
-		return nil, ErrStateNotFound("token design value", utils.StringerChain(fact.Contract(), fact.TokenID()), err), nil
+		return nil, ErrStateNotFound("token design value", fact.Contract().String(), err), nil
 	}
 
 	al := design.Policy().ApproveList()
@@ -225,7 +225,7 @@ func (opp *TransferFromProcessor) Process(
 	if idx < 0 {
 		return nil, ErrBaseOperationProcess(
 			"sender is not approved account of target",
-			utils.StringerChain(fact.Contract(), fact.TokenID(), fact.Sender(), fact.Target()),
+			utils.JoinStringers(fact.Contract(), fact.Sender(), fact.Target()),
 			err,
 		), nil
 	}
@@ -246,7 +246,7 @@ func (opp *TransferFromProcessor) Process(
 		return nil, ErrInvalid(policy, err), nil
 	}
 
-	design = types.NewDesign(design.TokenID(), design.Symbol(), policy)
+	design = types.NewDesign(design.Symbol(), design.Name(), policy)
 	if err := design.IsValid(nil); err != nil {
 		return nil, ErrInvalid(design, err), nil
 	}
@@ -258,12 +258,12 @@ func (opp *TransferFromProcessor) Process(
 
 	st, err = currencystate.ExistsState(g.TokenBalance(fact.Sender()), "key of token balance", getStateFunc)
 	if err != nil {
-		return nil, ErrStateNotFound("token balance", utils.StringerChain(fact.Contract(), fact.TokenID(), fact.Target()), err), nil
+		return nil, ErrStateNotFound("token balance", utils.JoinStringers(fact.Contract(), fact.Target()), err), nil
 	}
 
 	sb, err := state.StateTokenBalanceValue(st)
 	if err != nil {
-		return nil, ErrStateNotFound("token balance value", utils.StringerChain(fact.Contract(), fact.TokenID(), fact.Target()), err), nil
+		return nil, ErrStateNotFound("token balance value", utils.JoinStringers(fact.Contract(), fact.Target()), err), nil
 	}
 
 	sts[2] = currencystate.NewStateMergeValue(
@@ -274,11 +274,11 @@ func (opp *TransferFromProcessor) Process(
 	rb := common.ZeroBig
 	switch st, found, err := getStateFunc(g.TokenBalance(fact.Receiver())); {
 	case err != nil:
-		return nil, ErrBaseOperationProcess("failed to check token balance", utils.StringerChain(fact.Contract(), fact.TokenID(), fact.Receiver()), err), nil
+		return nil, ErrBaseOperationProcess("failed to check token balance", utils.JoinStringers(fact.Contract(), fact.Receiver()), err), nil
 	case found:
 		b, err := state.StateTokenBalanceValue(st)
 		if err != nil {
-			return nil, ErrBaseOperationProcess("failed to get token balance value from state", utils.StringerChain(fact.Contract(), fact.TokenID(), fact.Receiver()), err), nil
+			return nil, ErrBaseOperationProcess("failed to get token balance value from state", utils.JoinStringers(fact.Contract(), fact.Receiver()), err), nil
 		}
 		rb = b
 	}

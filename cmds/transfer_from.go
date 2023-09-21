@@ -21,13 +21,6 @@ type TransferFromCommand struct {
 	target   base.Address
 }
 
-func NewTransferFromCommand() TransferFromCommand {
-	cmd := NewOperationCommand()
-	return TransferFromCommand{
-		OperationCommand: *cmd,
-	}
-}
-
 func (cmd *TransferFromCommand) Run(pctx context.Context) error { // nolint:dupl
 	if _, err := cmd.prepare(pctx); err != nil {
 		return err
@@ -76,14 +69,14 @@ func (cmd *TransferFromCommand) createOperation() (base.Operation, error) { // n
 	fact := token.NewTransferFromFact(
 		[]byte(cmd.Token),
 		cmd.sender, cmd.contract,
-		cmd.TokenID.CID, cmd.Currency.CID,
+		cmd.Currency.CID,
 		cmd.receiver,
 		cmd.target,
 		cmd.Amount.Big,
 	)
 
 	op := token.NewTransferFrom(fact)
-	if err := op.HashSign(cmd.Privatekey, cmd.NetworkID.NetworkID()); err != nil {
+	if err := op.Sign(cmd.Privatekey, cmd.NetworkID.NetworkID()); err != nil {
 		return nil, e.Wrap(err)
 	}
 

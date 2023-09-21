@@ -17,22 +17,25 @@ var (
 
 type RegisterTokenFact struct {
 	TokenFact
-	symbol      string
+	symbol      currencytypes.CurrencyID
+	name        string
 	totalSupply common.Big
 }
 
 func NewRegisterTokenFact(
 	token []byte,
 	sender, contract base.Address,
-	tokenID, currency currencytypes.CurrencyID,
-	symbol string,
+	currency currencytypes.CurrencyID,
+	symbol currencytypes.CurrencyID,
+	name string,
 	totalSupply common.Big,
 ) RegisterTokenFact {
 	fact := RegisterTokenFact{
 		TokenFact: NewTokenFact(
-			base.NewBaseFact(RegisterTokenFactHint, token), sender, contract, tokenID, currency,
+			base.NewBaseFact(RegisterTokenFactHint, token), sender, contract, currency,
 		),
 		symbol:      symbol,
+		name:        name,
 		totalSupply: totalSupply,
 	}
 	fact.SetHash(fact.GenerateHash())
@@ -42,11 +45,11 @@ func NewRegisterTokenFact(
 func (fact RegisterTokenFact) IsValid([]byte) error {
 	e := util.ErrInvalid.Errorf(utils.ErrStringInvalid(fact))
 
-	if err := fact.TokenFact.IsValid(nil); err != nil {
+	if err := util.CheckIsValiders(nil, false, fact.TokenFact, fact.symbol); err != nil {
 		return e.Wrap(err)
 	}
 
-	if fact.symbol == "" {
+	if fact.name == "" {
 		return e.Wrap(errors.Errorf("empty symbol"))
 	}
 
@@ -60,12 +63,17 @@ func (fact RegisterTokenFact) IsValid([]byte) error {
 func (fact RegisterTokenFact) Bytes() []byte {
 	return util.ConcatBytesSlice(
 		fact.TokenFact.Bytes(),
-		[]byte(fact.symbol),
+		fact.symbol.Bytes(),
+		[]byte(fact.name),
 		fact.totalSupply.Bytes(),
 	)
 }
 
-func (fact RegisterTokenFact) Symbol() string {
+func (fact RegisterTokenFact) Name() string {
+	return fact.name
+}
+
+func (fact RegisterTokenFact) Symbol() currencytypes.CurrencyID {
 	return fact.symbol
 }
 
@@ -74,9 +82,9 @@ func (fact RegisterTokenFact) TotalSupply() common.Big {
 }
 
 type RegisterToken struct {
-	TokenOperation
+	common.BaseOperation
 }
 
 func NewRegisterToken(fact RegisterTokenFact) RegisterToken {
-	return RegisterToken{TokenOperation: NewTokenOperation(RegisterTokenHint, fact)}
+	return RegisterToken{BaseOperation: common.NewBaseOperation(RegisterTokenHint, fact)}
 }

@@ -9,11 +9,10 @@ import (
 )
 
 func (fact *TokenFact) unmarshal(enc encoder.Encoder,
-	sa, ca, tid, cid string,
+	sa, ca, cid string,
 ) error {
 	e := util.StringError(utils.ErrStringUnmarshal(*fact))
 
-	fact.tokenID = types.CurrencyID(tid)
 	fact.currency = types.CurrencyID(cid)
 
 	switch a, err := base.DecodeAddress(sa, enc); {

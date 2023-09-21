@@ -19,13 +19,6 @@ type BurnCommand struct {
 	target base.Address
 }
 
-func NewBurnCommand() BurnCommand {
-	cmd := NewOperationCommand()
-	return BurnCommand{
-		OperationCommand: *cmd,
-	}
-}
-
 func (cmd *BurnCommand) Run(pctx context.Context) error { // nolint:dupl
 	if _, err := cmd.prepare(pctx); err != nil {
 		return err
@@ -68,13 +61,13 @@ func (cmd *BurnCommand) createOperation() (base.Operation, error) { // nolint:du
 	fact := token.NewBurnFact(
 		[]byte(cmd.Token),
 		cmd.sender, cmd.contract,
-		cmd.TokenID.CID, cmd.Currency.CID,
+		cmd.Currency.CID,
 		cmd.target,
 		cmd.Amount.Big,
 	)
 
 	op := token.NewBurn(fact)
-	if err := op.HashSign(cmd.Privatekey, cmd.NetworkID.NetworkID()); err != nil {
+	if err := op.Sign(cmd.Privatekey, cmd.NetworkID.NetworkID()); err != nil {
 		return nil, e.Wrap(err)
 	}
 

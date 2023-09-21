@@ -19,13 +19,6 @@ type MintCommand struct {
 	receiver base.Address
 }
 
-func NewMintCommand() MintCommand {
-	cmd := NewOperationCommand()
-	return MintCommand{
-		OperationCommand: *cmd,
-	}
-}
-
 func (cmd *MintCommand) Run(pctx context.Context) error { // nolint:dupl
 	if _, err := cmd.prepare(pctx); err != nil {
 		return err
@@ -68,13 +61,13 @@ func (cmd *MintCommand) createOperation() (base.Operation, error) { // nolint:du
 	fact := token.NewMintFact(
 		[]byte(cmd.Token),
 		cmd.sender, cmd.contract,
-		cmd.TokenID.CID, cmd.Currency.CID,
+		cmd.Currency.CID,
 		cmd.receiver,
 		cmd.Amount.Big,
 	)
 
 	op := token.NewMint(fact)
-	if err := op.HashSign(cmd.Privatekey, cmd.NetworkID.NetworkID()); err != nil {
+	if err := op.Sign(cmd.Privatekey, cmd.NetworkID.NetworkID()); err != nil {
 		return nil, e.Wrap(err)
 	}
 

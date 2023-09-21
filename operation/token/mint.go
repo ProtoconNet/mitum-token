@@ -24,13 +24,13 @@ type MintFact struct {
 func NewMintFact(
 	token []byte,
 	sender, contract base.Address,
-	tokenID, currency currencytypes.CurrencyID,
+	currency currencytypes.CurrencyID,
 	receiver base.Address,
 	amount common.Big,
 ) MintFact {
 	fact := MintFact{
 		TokenFact: NewTokenFact(
-			base.NewBaseFact(MintFactHint, token), sender, contract, tokenID, currency,
+			base.NewBaseFact(MintFactHint, token), sender, contract, currency,
 		),
 		receiver: receiver,
 		amount:   amount,
@@ -78,9 +78,9 @@ func (fact MintFact) Amount() common.Big {
 }
 
 type Mint struct {
-	TokenOperation
+	common.BaseOperation
 }
 
 func NewMint(fact MintFact) Mint {
-	return Mint{TokenOperation: NewTokenOperation(MintHint, fact)}
+	return Mint{BaseOperation: common.NewBaseOperation(MintHint, fact)}
 }

@@ -13,15 +13,9 @@ import (
 
 type RegisterTokenCommand struct {
 	OperationCommand
-	Symbol      string               `arg:"" name:"symbol" help:"token symbol" required:"true"`
-	TotalSupply currencycmds.BigFlag `arg:"" name:"total-supply" help:"total supply of token" required:"true"`
-}
-
-func NewRegisterTokenCommand() RegisterTokenCommand {
-	cmd := NewOperationCommand()
-	return RegisterTokenCommand{
-		OperationCommand: *cmd,
-	}
+	Symbol      currencycmds.CurrencyIDFlag `arg:"" name:"symbol" help:"token symbol" required:"true"`
+	Name        string                      `arg:"" name:"name" help:"token name" required:"true"`
+	TotalSupply currencycmds.BigFlag        `arg:"" name:"total-supply" help:"total supply of token" required:"true"`
 }
 
 func (cmd *RegisterTokenCommand) Run(pctx context.Context) error { // nolint:dupl
@@ -52,13 +46,13 @@ func (cmd *RegisterTokenCommand) createOperation() (base.Operation, error) { // 
 	fact := token.NewRegisterTokenFact(
 		[]byte(cmd.Token),
 		cmd.sender, cmd.contract,
-		cmd.TokenID.CID, cmd.Currency.CID,
-		cmd.Symbol,
+		cmd.Symbol.CID, cmd.Currency.CID,
+		cmd.Name,
 		cmd.TotalSupply.Big,
 	)
 
 	op := token.NewRegisterToken(fact)
-	if err := op.HashSign(cmd.Privatekey, cmd.NetworkID.NetworkID()); err != nil {
+	if err := op.Sign(cmd.Privatekey, cmd.NetworkID.NetworkID()); err != nil {
 		return nil, e.Wrap(err)
 	}
 

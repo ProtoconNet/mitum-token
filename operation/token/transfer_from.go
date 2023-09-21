@@ -25,13 +25,13 @@ type TransferFromFact struct {
 func NewTransferFromFact(
 	token []byte,
 	sender, contract base.Address,
-	tokenID, currency currencytypes.CurrencyID,
+	currency currencytypes.CurrencyID,
 	receiver, target base.Address,
 	amount common.Big,
 ) TransferFromFact {
 	fact := TransferFromFact{
 		TokenFact: NewTokenFact(
-			base.NewBaseFact(TransferFromFactHint, token), sender, contract, tokenID, currency,
+			base.NewBaseFact(TransferFromFactHint, token), sender, contract, currency,
 		),
 		receiver: receiver,
 		target:   target,
@@ -101,9 +101,9 @@ func (fact TransferFromFact) Amount() common.Big {
 }
 
 type TransferFrom struct {
-	TokenOperation
+	common.BaseOperation
 }
 
 func NewTransferFrom(fact TransferFromFact) TransferFrom {
-	return TransferFrom{TokenOperation: NewTokenOperation(TransferFromHint, fact)}
+	return TransferFrom{BaseOperation: common.NewBaseOperation(TransferFromHint, fact)}
 }

@@ -24,13 +24,13 @@ type BurnFact struct {
 func NewBurnFact(
 	token []byte,
 	sender, contract base.Address,
-	tokenID, currency currencytypes.CurrencyID,
+	currency currencytypes.CurrencyID,
 	target base.Address,
 	amount common.Big,
 ) BurnFact {
 	fact := BurnFact{
 		TokenFact: NewTokenFact(
-			base.NewBaseFact(BurnFactHint, token), sender, contract, tokenID, currency,
+			base.NewBaseFact(BurnFactHint, token), sender, contract, currency,
 		),
 		target: target,
 		amount: amount,
@@ -78,9 +78,9 @@ func (fact BurnFact) Amount() common.Big {
 }
 
 type Burn struct {
-	TokenOperation
+	common.BaseOperation
 }
 
 func NewBurn(fact BurnFact) Burn {
-	return Burn{TokenOperation: NewTokenOperation(BurnHint, fact)}
+	return Burn{BaseOperation: common.NewBaseOperation(BurnHint, fact)}
 }
