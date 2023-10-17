@@ -78,41 +78,41 @@ func (opp *ApproveProcessor) PreProcess(
 	}
 
 	if err := currencystate.CheckExistsState(currency.StateKeyAccount(fact.Sender()), getStateFunc); err != nil {
-		return nil, ErrStateNotFound("sender", fact.Sender().String(), err), nil
+		return nil, ErrBaseOperationProcess(err, "sender not found, %s", fact.Sender().String()), nil
 	}
 
 	if err := currencystate.CheckNotExistsState(extstate.StateKeyContractAccount(fact.Sender()), getStateFunc); err != nil {
-		return nil, ErrBaseOperationProcess("contract account cannot run approve-operation", fact.Sender().String(), err), nil
+		return nil, ErrBaseOperationProcess(err, "contract account cannot run approve-operation, %s", fact.Sender().String()), nil
 	}
 
 	if err := currencystate.CheckExistsState(extstate.StateKeyContractAccount(fact.Contract()), getStateFunc); err != nil {
-		return nil, ErrStateNotFound("contract", fact.Contract().String(), err), nil
+		return nil, ErrBaseOperationProcess(err, "contract not found, %s", fact.Contract().String()), nil
 	}
 
 	if err := currencystate.CheckExistsState(currency.StateKeyCurrencyDesign(fact.Currency()), getStateFunc); err != nil {
-		return nil, ErrStateNotFound("currency", fact.Currency().String(), err), nil
+		return nil, ErrBaseOperationProcess(err, "currency not found, %s", fact.Currency().String()), nil
 	}
 
 	if err := currencystate.CheckExistsState(currency.StateKeyAccount(fact.Approved()), getStateFunc); err != nil {
-		return nil, ErrStateNotFound("approved", fact.Approved().String(), err), nil
+		return nil, ErrBaseOperationProcess(err, "approved not found, %s", fact.Approved().String()), nil
 	}
 
 	if err := currencystate.CheckNotExistsState(extstate.StateKeyContractAccount(fact.Approved()), getStateFunc); err != nil {
-		return nil, ErrBaseOperationProcess("contract cannot become approved account", fact.Approved().String(), err), nil
+		return nil, ErrBaseOperationProcess(err, "contract cannot become approved account, %s", fact.Approved().String()), nil
 	}
 
 	g := state.NewStateKeyGenerator(fact.Contract())
 
 	if err := currencystate.CheckExistsState(g.Design(), getStateFunc); err != nil {
-		return nil, ErrStateNotFound("token design", fact.Contract().String(), err), nil
+		return nil, ErrBaseOperationProcess(err, "token design not found, %s", fact.Contract().String()), nil
 	}
 
 	if err := currencystate.CheckExistsState(g.TokenBalance(fact.Sender()), getStateFunc); err != nil {
-		return nil, ErrStateNotFound("token balance", utils.JoinStringers(fact.Contract(), fact.Sender()), err), nil
+		return nil, ErrBaseOperationProcess(err, "token balance not found, %s", utils.JoinStringers(fact.Contract(), fact.Sender())), nil
 	}
 
 	if err := currencystate.CheckFactSignsByState(fact.Sender(), op.Signs(), getStateFunc); err != nil {
-		return ctx, ErrBaseOperationProcess("invalid signing", "", err), nil
+		return ctx, ErrBaseOperationProcess(err, "invalid signing"), nil
 	}
 
 	return ctx, nil, nil
@@ -141,12 +141,12 @@ func (opp *ApproveProcessor) Process(
 
 	st, err := currencystate.ExistsState(g.Design(), "key of design", getStateFunc)
 	if err != nil {
-		return nil, ErrStateNotFound("token design", fact.Contract().String(), err), nil
+		return nil, ErrBaseOperationProcess(err, "token design not found, %s", fact.Contract().String()), nil
 	}
 
 	design, err := state.StateDesignValue(st)
 	if err != nil {
-		return nil, ErrStateNotFound("token design value", fact.Contract().String(), err), nil
+		return nil, ErrBaseOperationProcess(err, "token design value not found, %s", fact.Contract().String()), nil
 	}
 
 	al := design.Policy().ApproveList()
@@ -184,14 +184,14 @@ func (opp *ApproveProcessor) Process(
 		return nil, ErrInvalid(policy, err), nil
 	}
 
-	design = types.NewDesign(design.Symbol(), design.Name(), policy)
-	if err := design.IsValid(nil); err != nil {
-		return nil, ErrInvalid(design, err), nil
+	de := types.NewDesign(design.Symbol(), design.Name(), policy)
+	if err := de.IsValid(nil); err != nil {
+		return nil, ErrInvalid(de, err), nil
 	}
 
 	sts[1] = currencystate.NewStateMergeValue(
 		g.Design(),
-		state.NewDesignStateValue(design),
+		state.NewDesignStateValue(de),
 	)
 
 	return sts, nil, nil

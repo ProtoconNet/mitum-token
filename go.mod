@@ -2,12 +2,14 @@ module github.com/ProtoconNet/mitum-token
 
 go 1.20
 
+replace github.com/ProtoconNet/mitum-currency/v3 => /Users/soonkukkang/go/src/github.com/ProtoconNet/mitum-currency
+replace github.com/ProtoconNet/mitum2 => /Users/soonkukkang/go/src/github.com/ProtoconNet/mitum2
+
 require (
-	github.com/ProtoconNet/mitum-currency/v3 v3.0.0-alpha.0.20230917062443-936c168ff47a
-	github.com/ProtoconNet/mitum2 v0.0.0-20230917053416-239fc0fabf6f
+	github.com/ProtoconNet/mitum-currency/v3 v3.0.0-alpha.0.20231013162211-895efedc35ae
+	github.com/ProtoconNet/mitum2 v0.0.0-20231006031328-cc14784a72b1
 	github.com/alecthomas/kong v0.8.0
 	github.com/arl/statsviz v0.5.2
-	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.0
 	github.com/pkg/errors v0.9.1
 	github.com/rs/zerolog v1.30.0
@@ -42,6 +44,7 @@ require (
 	github.com/golang/snappy v0.0.5-0.20220116011046-fa5810519dcb // indirect
 	github.com/google/btree v1.1.2 // indirect
 	github.com/google/pprof v0.0.0-20230901174712-0191c66da455 // indirect
+	github.com/gorilla/handlers v1.5.1 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/hashicorp/consul/api v1.24.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect

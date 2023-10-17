@@ -46,7 +46,7 @@ func (cmd *RegisterTokenCommand) createOperation() (base.Operation, error) { // 
 	fact := token.NewRegisterTokenFact(
 		[]byte(cmd.Token),
 		cmd.sender, cmd.contract,
-		cmd.Symbol.CID, cmd.Currency.CID,
+		cmd.Currency.CID, cmd.Symbol.CID,
 		cmd.Name,
 		cmd.TotalSupply.Big,
 	)

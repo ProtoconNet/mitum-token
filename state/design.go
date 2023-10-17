@@ -50,20 +50,20 @@ func (s DesignStateValue) HashBytes() []byte {
 	return s.design.Bytes()
 }
 
-func StateDesignValue(st base.State) (types.Design, error) {
+func StateDesignValue(st base.State) (*types.Design, error) {
 	e := util.ErrNotFound.Errorf(ErrStringStateNotFound(st.Key()))
 
 	v := st.Value()
 	if v == nil {
-		return types.Design{}, e.Wrap(errors.Errorf("nil value"))
+		return nil, e.Wrap(errors.Errorf("nil value"))
 	}
 
 	s, ok := v.(DesignStateValue)
 	if !ok {
-		return types.Design{}, e.Wrap(errors.Errorf(utils.ErrStringTypeCast(DesignStateValue{}, v)))
+		return nil, e.Wrap(errors.Errorf(utils.ErrStringTypeCast(DesignStateValue{}, v)))
 	}
 
-	return s.design, nil
+	return &s.design, nil
 }
 
 func StateKeyDesign(contract base.Address) string {

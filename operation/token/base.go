@@ -99,30 +99,30 @@ func calculateCurrencyFee(fact TokenFact, getStateFunc base.GetStateFunc) (
 
 	policy, err := state.ExistsCurrencyPolicy(currency, getStateFunc)
 	if err != nil {
-		return nil, ErrStateNotFound("currency policy", currency.String(), err), nil
+		return nil, ErrBaseOperationProcess(err, "currency policy not found, %s", currency.String()), nil
 	}
 
 	fee, err := policy.Feeer().Fee(common.ZeroBig)
 	if err != nil {
-		return nil, ErrBaseOperationProcess("failed to check fee of currency", currency.String(), err), nil
+		return nil, ErrBaseOperationProcess(err, "failed to check fee of currency, %s", currency.String()), nil
 	}
 
 	st, err := state.ExistsState(currencystate.StateKeyBalance(sender, currency), "key of currency balance", getStateFunc)
 	if err != nil {
-		return nil, ErrStateNotFound("currency balance", utils.JoinStringers(sender, currency), err), nil
+		return nil, ErrBaseOperationProcess(err, "currency balance not found, %s", utils.JoinStringers(sender, currency)), nil
 	}
 	sb := state.NewStateMergeValue(st.Key(), st.Value())
 
 	switch b, err := currencystate.StateBalanceValue(st); {
 	case err != nil:
-		return nil, ErrBaseOperationProcess("failed to get balance value", utils.JoinStringers(sender, currency), err), nil
+		return nil, ErrBaseOperationProcess(err, "failed to get balance value, %s", utils.JoinStringers(sender, currency)), nil
 	case b.Big().Compare(fee) < 0:
-		return nil, ErrBaseOperationProcess("not enough balance of sender", utils.JoinStringers(sender, currency), err), nil
+		return nil, ErrBaseOperationProcess(err, "not enough balance of sender, %s", utils.JoinStringers(sender, currency)), nil
 	}
 
 	v, ok := sb.Value().(currencystate.BalanceStateValue)
 	if !ok {
-		return nil, ErrBaseOperationProcess(utils.ErrStringTypeCast(currencystate.BalanceStateValue{}, sb.Value()), "", nil), nil
+		return nil, ErrBaseOperationProcess(nil, "expected %T, not %T", currencystate.BalanceStateValue{}, sb.Value()), nil
 	}
 	return state.NewStateMergeValue(sb.Key(), currencystate.NewBalanceStateValue(v.Amount.WithBig(v.Amount.Big().Sub(fee)))), nil, nil
 }

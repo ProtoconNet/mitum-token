@@ -81,11 +81,11 @@ func (opp *TransferProcessor) PreProcess(
 	}
 
 	if err := currencystate.CheckNotExistsState(extstate.StateKeyContractAccount(fact.Sender()), getStateFunc); err != nil {
-		return nil, ErrBaseOperationProcess("contract account cannot transfer token", fact.Sender().String(), err), nil
+		return nil, ErrBaseOperationProcess(err, "contract account cannot transfer token, %s", fact.Sender().String()), nil
 	}
 
 	if err := currencystate.CheckExistsState(extstate.StateKeyContractAccount(fact.Contract()), getStateFunc); err != nil {
-		return nil, ErrBaseOperationProcess("contract", fact.Contract().String(), err), nil
+		return nil, ErrBaseOperationProcess(err, "contract not found, %s", fact.Contract().String()), nil
 	}
 
 	if err := currencystate.CheckExistsState(currency.StateKeyCurrencyDesign(fact.Currency()), getStateFunc); err != nil {
@@ -97,7 +97,7 @@ func (opp *TransferProcessor) PreProcess(
 	}
 
 	if err := currencystate.CheckNotExistsState(extstate.StateKeyContractAccount(fact.Receiver()), getStateFunc); err != nil {
-		return nil, ErrBaseOperationProcess("contract account cannot receive tokens", fact.Receiver().String(), err), nil
+		return nil, ErrBaseOperationProcess(err, "contract account cannot receive tokens, %s", fact.Receiver().String()), nil
 	}
 
 	g := state.NewStateKeyGenerator(fact.Contract())
@@ -118,14 +118,14 @@ func (opp *TransferProcessor) PreProcess(
 
 	if tb.Compare(fact.Amount()) < 0 {
 		return nil, ErrBaseOperationProcess(
-			fmt.Sprintf("token balance is less than amount to transfer, %s < %s", tb, fact.Amount()),
-			utils.JoinStringers(fact.Contract(), fact.Sender()),
-			err,
+			nil,
+			"token balance is less than amount to transfer, %s < %s, %s, %s",
+			tb, fact.Amount(), fact.Contract(), fact.Sender(),
 		), nil
 	}
 
 	if err := currencystate.CheckFactSignsByState(fact.Sender(), op.Signs(), getStateFunc); err != nil {
-		return ctx, ErrBaseOperationProcess("invalid signing", "", err), nil
+		return ctx, ErrBaseOperationProcess(err, "invalid signing"), nil
 	}
 
 	return ctx, nil, nil
@@ -170,11 +170,11 @@ func (opp *TransferProcessor) Process(
 	rb := common.ZeroBig
 	switch st, found, err := getStateFunc(g.TokenBalance(fact.Receiver())); {
 	case err != nil:
-		return nil, ErrBaseOperationProcess("failed to check token balance", utils.JoinStringers(fact.Contract(), fact.Receiver()), err), nil
+		return nil, ErrBaseOperationProcess(err, "failed to check token balance, %s, %s", fact.Contract(), fact.Receiver()), nil
 	case found:
 		b, err := state.StateTokenBalanceValue(st)
 		if err != nil {
-			return nil, ErrBaseOperationProcess("failed to get token balance value from state", utils.JoinStringers(fact.Contract(), fact.Receiver()), err), nil
+			return nil, ErrBaseOperationProcess(err, "failed to get token balance value from state, %s, %s", fact.Contract(), fact.Receiver()), nil
 		}
 		rb = b
 	}

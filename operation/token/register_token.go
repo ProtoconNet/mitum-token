@@ -42,7 +42,7 @@ func NewRegisterTokenFact(
 	return fact
 }
 
-func (fact RegisterTokenFact) IsValid([]byte) error {
+func (fact RegisterTokenFact) IsValid(b []byte) error {
 	e := util.ErrInvalid.Errorf(utils.ErrStringInvalid(fact))
 
 	if err := util.CheckIsValiders(nil, false, fact.TokenFact, fact.symbol); err != nil {
@@ -57,6 +57,9 @@ func (fact RegisterTokenFact) IsValid([]byte) error {
 		return e.Wrap(errors.Errorf("nil big"))
 	}
 
+	if err := common.IsValidOperationFact(fact, b); err != nil {
+		return err
+	}
 	return nil
 }
 

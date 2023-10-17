@@ -39,7 +39,7 @@ func NewTransferFact(
 	return fact
 }
 
-func (fact TransferFact) IsValid([]byte) error {
+func (fact TransferFact) IsValid(b []byte) error {
 	e := util.ErrInvalid.Errorf(utils.ErrStringInvalid(fact))
 
 	if err := fact.TokenFact.IsValid(nil); err != nil {
@@ -58,6 +58,9 @@ func (fact TransferFact) IsValid([]byte) error {
 		return e.Wrap(errors.Errorf("zero amount"))
 	}
 
+	if err := common.IsValidOperationFact(fact, b); err != nil {
+		return err
+	}
 	return nil
 }
 

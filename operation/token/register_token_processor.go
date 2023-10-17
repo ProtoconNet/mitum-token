@@ -81,7 +81,7 @@ func (opp *RegisterTokenProcessor) PreProcess(
 	}
 
 	if err := currencystate.CheckNotExistsState(extstate.StateKeyContractAccount(fact.Sender()), getStateFunc); err != nil {
-		return nil, ErrBaseOperationProcess("contract account cannot register token", fact.Sender().String(), err), nil
+		return nil, ErrBaseOperationProcess(err, "contract account cannot register token, %s", fact.Sender().String()), nil
 	}
 
 	st, err := currencystate.ExistsState(extstate.StateKeyContractAccount(fact.Contract()), "key of contract account", getStateFunc)
@@ -95,11 +95,11 @@ func (opp *RegisterTokenProcessor) PreProcess(
 	}
 
 	if !ca.Owner().Equal(fact.Sender()) {
-		return nil, ErrBaseOperationProcess("not contract account owner", fact.Sender().String(), nil), nil
+		return nil, ErrBaseOperationProcess(nil, "not contract account owner, %s", fact.Sender().String()), nil
 	}
 
 	if ca.IsActive() {
-		return nil, ErrBaseOperationProcess("a design is already registered", fact.Contract().String(), nil), nil
+		return nil, ErrBaseOperationProcess(nil, "a design is already registered, %s", fact.Contract().String()), nil
 	}
 
 	if err := currencystate.CheckExistsState(currency.StateKeyCurrencyDesign(fact.Currency()), getStateFunc); err != nil {
@@ -119,7 +119,7 @@ func (opp *RegisterTokenProcessor) PreProcess(
 	}
 
 	if err := currencystate.CheckFactSignsByState(fact.Sender(), op.Signs(), getStateFunc); err != nil {
-		return ctx, ErrBaseOperationProcess("invalid signing", "", err), nil
+		return ctx, ErrBaseOperationProcess(err, "invalid signing"), nil
 	}
 
 	return ctx, nil, nil
