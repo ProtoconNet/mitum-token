@@ -22,6 +22,7 @@ func (d Design) MarshalJSON() ([]byte, error) {
 		BaseHinter: d.BaseHinter,
 		Symbol:     d.symbol,
 		Name:       d.name,
+		Policy:     d.policy,
 	})
 }
 
