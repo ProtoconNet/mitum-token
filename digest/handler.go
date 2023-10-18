@@ -13,11 +13,15 @@ import (
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/encoder"
 	"github.com/ProtoconNet/mitum2/util/logging"
-	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	"golang.org/x/sync/singleflight"
+)
+
+var (
+	HandlerPathToken        = `/token/{contract:.*}`
+	HandlerPathTokenBalance = `/token/{contract:.*}/account/{address:(?i)` + base.REStringAddressString + `}` // revive:disable-line:line-length-limit
 )
 
 func init() {
@@ -52,6 +56,7 @@ func NewHandlers(
 	st *currencydigest.Database,
 	cache currencydigest.Cache,
 	router *mux.Router,
+	routes map[string]*mux.Route,
 ) *Handlers {
 	var log *logging.Logging
 	if err := util.LoadFromContextOK(ctx, launch.LoggingContextKey, &log); err != nil {
@@ -66,7 +71,7 @@ func NewHandlers(
 		database:        st,
 		cache:           cache,
 		router:          router,
-		routes:          map[string]*mux.Route{},
+		routes:          routes,
 		itemsLimiter:    currencydigest.DefaultItemsLimiter,
 		rg:              &singleflight.Group{},
 		expireNotFilled: time.Second * 3,
@@ -74,13 +79,13 @@ func NewHandlers(
 }
 
 func (hd *Handlers) Initialize() error {
-	cors := handlers.CORS(
-		handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS"}),
-		handlers.AllowedHeaders([]string{"content-type"}),
-		handlers.AllowedOrigins([]string{"*"}),
-		handlers.AllowCredentials(),
-	)
-	hd.router.Use(cors)
+	//cors := handlers.CORS(
+	//	handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS"}),
+	//	handlers.AllowedHeaders([]string{"content-type"}),
+	//	handlers.AllowedOrigins([]string{"*"}),
+	//	handlers.AllowCredentials(),
+	//)
+	//hd.router.Use(cors)
 
 	hd.setHandlers()
 
@@ -106,7 +111,10 @@ func (hd *Handlers) Handler() http.Handler {
 }
 
 func (hd *Handlers) setHandlers() {
-
+	_ = hd.setHandler(HandlerPathTokenBalance, hd.handleTokenBalance, true).
+		Methods(http.MethodOptions, "GET")
+	_ = hd.setHandler(HandlerPathToken, hd.handleToken, true).
+		Methods(http.MethodOptions, "GET")
 }
 
 func (hd *Handlers) setHandler(prefix string, h network.HTTPHandlerFunc, useCache bool) *mux.Route {

@@ -7,17 +7,15 @@ import (
 	"time"
 
 	currencydigest "github.com/ProtoconNet/mitum-currency/v3/digest"
-
-	"github.com/pkg/errors"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
-
 	"github.com/ProtoconNet/mitum-currency/v3/digest/isaac"
 	statecurrency "github.com/ProtoconNet/mitum-currency/v3/state/currency"
-
+	stateextension "github.com/ProtoconNet/mitum-currency/v3/state/extension"
 	mitumbase "github.com/ProtoconNet/mitum2/base"
 	mitumutil "github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/fixedtree"
+	"github.com/pkg/errors"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var bulkWriteLimit = 500
@@ -36,6 +34,8 @@ type BlockSession struct {
 	balanceModels         []mongo.WriteModel
 	currencyModels        []mongo.WriteModel
 	contractAccountModels []mongo.WriteModel
+	tokenModels           []mongo.WriteModel
+	tokenBalanceModels    []mongo.WriteModel
 	statesValue           *sync.Map
 	balanceAddressList    []string
 }
@@ -81,9 +81,9 @@ func (bs *BlockSession) Prepare() error {
 	if err := bs.prepareCurrencies(); err != nil {
 		return err
 	}
-	// if err := bs.prepareDAO(); err != nil {
-	// 	return err
-	// }
+	if err := bs.prepareToken(); err != nil {
+		return err
+	}
 
 	return bs.prepareAccounts()
 }
@@ -121,8 +121,26 @@ func (bs *BlockSession) Commit(ctx context.Context) error {
 		}
 	}
 
+	if len(bs.contractAccountModels) > 0 {
+		if err := bs.writeModels(ctx, defaultColNameContractAccount, bs.contractAccountModels); err != nil {
+			return err
+		}
+	}
+
 	if len(bs.balanceModels) > 0 {
 		if err := bs.writeModels(ctx, defaultColNameBalance, bs.balanceModels); err != nil {
+			return err
+		}
+	}
+
+	if len(bs.tokenModels) > 0 {
+		if err := bs.writeModels(ctx, defaultColNameToken, bs.tokenModels); err != nil {
+			return err
+		}
+	}
+
+	if len(bs.tokenBalanceModels) > 0 {
+		if err := bs.writeModels(ctx, defaultColNameTokenBalance, bs.tokenBalanceModels); err != nil {
 			return err
 		}
 	}
@@ -142,7 +160,11 @@ func (bs *BlockSession) prepareOperationsTree() error {
 
 	if err := bs.opstree.Traverse(func(_ uint64, no fixedtree.Node) (bool, error) {
 		nno := no.(mitumbase.OperationFixedtreeNode)
-		nodes[nno.Key()] = nno
+		if nno.InState() {
+			nodes[nno.Key()] = nno
+		} else {
+			nodes[nno.Key()[:len(nno.Key())-1]] = nno
+		}
 
 		return true, nil
 	}); err != nil {
@@ -239,6 +261,7 @@ func (bs *BlockSession) prepareAccounts() error {
 
 	var accountModels []mongo.WriteModel
 	var balanceModels []mongo.WriteModel
+	var contractAccountModels []mongo.WriteModel
 	for i := range bs.sts {
 		st := bs.sts[i]
 
@@ -256,12 +279,19 @@ func (bs *BlockSession) prepareAccounts() error {
 			}
 			balanceModels = append(balanceModels, j...)
 			bs.balanceAddressList = append(bs.balanceAddressList, address)
+		case stateextension.IsStateContractAccountKey(st.Key()):
+			j, err := bs.handleContractAccountState(st)
+			if err != nil {
+				return err
+			}
+			contractAccountModels = append(contractAccountModels, j...)
 		default:
 			continue
 		}
 	}
 
 	bs.accountModels = accountModels
+	bs.contractAccountModels = contractAccountModels
 	bs.balanceModels = balanceModels
 
 	return nil
@@ -343,6 +373,8 @@ func (bs *BlockSession) close() error {
 	bs.accountModels = nil
 	bs.balanceModels = nil
 	bs.contractAccountModels = nil
+	bs.tokenModels = nil
+	bs.tokenBalanceModels = nil
 
 	return bs.st.Close()
 }
