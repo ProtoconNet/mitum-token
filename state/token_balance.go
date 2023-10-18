@@ -67,5 +67,5 @@ func StateTokenBalanceValue(st base.State) (common.Big, error) {
 }
 
 func StateKeyTokenBalance(contract base.Address, address base.Address) string {
-	return fmt.Sprintf("%s:%s:%s", StateKeyTokenPrefix(contract), address, TokenBalanceSuffix)
+	return fmt.Sprintf("%s:%s%s", StateKeyTokenPrefix(contract), address, TokenBalanceSuffix)
 }
