@@ -170,16 +170,16 @@ func (opp *RegisterTokenProcessor) Process(
 	if err != nil {
 		return nil, ErrStateNotFound("contract value", fact.Contract().String(), err), nil
 	}
-	ca.SetIsActive(true)
+	nca := ca.SetIsActive(true)
 
 	sts[2] = currencystate.NewStateMergeValue(
 		extstate.StateKeyContractAccount(fact.Contract()),
-		extstate.NewContractAccountStateValue(ca),
+		extstate.NewContractAccountStateValue(nca),
 	)
 
 	if fact.TotalSupply().OverZero() {
 		sts = append(sts, currencystate.NewStateMergeValue(
-			g.TokenBalance(fact.Contract()),
+			g.TokenBalance(fact.Sender()),
 			state.NewTokenBalanceStateValue(fact.TotalSupply()),
 		))
 	}
