@@ -8,7 +8,6 @@ import (
 	"github.com/ProtoconNet/mitum-token/utils"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
-	"github.com/ProtoconNet/mitum2/util/valuehash"
 	"github.com/pkg/errors"
 )
 
@@ -30,10 +29,6 @@ func NewTokenFact(
 		contract,
 		currency,
 	}
-}
-
-func (fact TokenFact) GenerateHash() util.Hash {
-	return valuehash.NewSHA256(fact.Bytes())
 }
 
 func (fact TokenFact) IsValid([]byte) error {

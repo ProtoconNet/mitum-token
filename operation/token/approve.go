@@ -7,6 +7,7 @@ import (
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
+	"github.com/ProtoconNet/mitum2/util/valuehash"
 	"github.com/pkg/errors"
 )
 
@@ -62,6 +63,10 @@ func (fact ApproveFact) IsValid(b []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (fact ApproveFact) GenerateHash() util.Hash {
+	return valuehash.NewSHA256(fact.Bytes())
 }
 
 func (fact ApproveFact) Bytes() []byte {
