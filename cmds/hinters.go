@@ -15,6 +15,7 @@ var SupportedProposalOperationFactHinters []encoder.DecodeDetail
 
 var AddedHinters = []encoder.DecodeDetail{
 	// revive:disable-next-line:line-length-limit
+	{Hint: types.ApproveBoxHint, Instance: types.ApproveBox{}},
 	{Hint: types.ApproveInfoHint, Instance: types.ApproveInfo{}},
 	{Hint: types.PolicyHint, Instance: types.Policy{}},
 	{Hint: types.DesignHint, Instance: types.Design{}},

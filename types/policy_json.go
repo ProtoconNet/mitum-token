@@ -12,8 +12,8 @@ import (
 
 type PolicyJSONMarshaler struct {
 	hint.BaseHinter
-	TotalSupply common.Big    `json:"total_supply"`
-	ApproveList []ApproveInfo `json:"approve_list"`
+	TotalSupply common.Big   `json:"total_supply"`
+	ApproveList []ApproveBox `json:"approve_list"`
 }
 
 func (p Policy) MarshalJSON() ([]byte, error) {
@@ -38,5 +38,5 @@ func (p *Policy) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 		return e.Wrap(err)
 	}
 
-	return p.unmarshal(enc, u.Hint, u.TotalSupply, u.ApproveList)
+	return p.unpack(enc, u.Hint, u.TotalSupply, u.ApproveList)
 }

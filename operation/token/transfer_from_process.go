@@ -121,11 +121,11 @@ func (opp *TransferFromProcessor) PreProcess(
 		return nil, ErrStateNotFound("token design value", fact.Contract().String(), err), nil
 	}
 
-	al := design.Policy().ApproveList()
+	approveBoxList := design.Policy().ApproveList()
 
 	idx := -1
-	for i, ap := range al {
-		if ap.Account().Equal(fact.Target()) {
+	for i, apb := range approveBoxList {
+		if apb.Account().Equal(fact.Target()) {
 			idx = i
 			break
 		}
@@ -134,13 +134,13 @@ func (opp *TransferFromProcessor) PreProcess(
 	if idx < 0 {
 		return nil, ErrBaseOperationProcess(
 			err,
-			"sender is not approved account of target, %s, %s, %s",
-			fact.Contract(), fact.Sender(), fact.Target(),
+			"sender have not approved %s, %s",
+			fact.Contract(), fact.Sender(),
 		), nil
 	}
 
-	big, found := al[idx].Approved()[fact.Sender().String()]
-	if !found {
+	aprInfo := approveBoxList[idx].GetApproveInfo(fact.Sender())
+	if aprInfo == nil {
 		return nil, ErrBaseOperationProcess(
 			err,
 			"sender is not approved account of target, %s, %s, %s",
@@ -148,11 +148,11 @@ func (opp *TransferFromProcessor) PreProcess(
 		), nil
 	}
 
-	if big.Compare(fact.Amount()) < 0 {
+	if aprInfo.Amount().Compare(fact.Amount()) < 0 {
 		return nil, ErrBaseOperationProcess(
 			err,
 			"approved amount is less than amount to transfer, %s < %s, %s, %s, %s",
-			big, fact.Amount(), fact.Contract(), fact.Sender(), fact.Target(),
+			aprInfo.Amount(), fact.Amount(), fact.Contract(), fact.Sender(), fact.Target(),
 		), nil
 	}
 
@@ -187,10 +187,7 @@ func (opp *TransferFromProcessor) Process(
 ) {
 	e := util.StringError(ErrStringProcess(*opp))
 
-	fact, ok := op.Fact().(TransferFromFact)
-	if !ok {
-		return nil, nil, e.Wrap(errors.Errorf(utils.ErrStringTypeCast(TransferFromFact{}, op.Fact())))
-	}
+	fact, _ := op.Fact().(TransferFromFact)
 
 	g := state.NewStateKeyGenerator(fact.Contract())
 
@@ -212,36 +209,31 @@ func (opp *TransferFromProcessor) Process(
 		return nil, ErrStateNotFound("token design value", fact.Contract().String(), err), nil
 	}
 
-	al := design.Policy().ApproveList()
+	approveBoxList := design.Policy().ApproveList()
 
 	idx := -1
-	for i, ap := range al {
-		if ap.Account().Equal(fact.Target()) {
+	for i, apb := range approveBoxList {
+		if apb.Account().Equal(fact.Target()) {
 			idx = i
 			break
 		}
 	}
 
-	if idx < 0 {
-		return nil, ErrBaseOperationProcess(
-			err,
-			"sender is not approved account of target, %s, %s, %s",
-			fact.Contract(), fact.Sender(), fact.Target(),
-		), nil
-	}
-
-	ap := al[idx].Approved()
-	am := ap[fact.Sender().String()].Sub(fact.Amount())
+	apb := approveBoxList[idx]
+	am := apb.GetApproveInfo(fact.Sender()).Amount().Sub(fact.Amount())
 
 	if am.IsZero() {
-		delete(ap, fact.Sender().String())
+		err := apb.RemoveApproveInfo(fact.Sender())
+		if err != nil {
+			return nil, nil, e.Wrap(err)
+		}
 	} else {
-		ap[fact.Sender().String()] = am
+		apb.SetApproveInfo(types.NewApproveInfo(fact.Sender(), am))
 	}
 
-	al[idx] = types.NewApproveInfo(al[idx].Account(), ap)
+	approveBoxList[idx] = apb
 
-	policy := types.NewPolicy(design.Policy().TotalSupply(), al)
+	policy := types.NewPolicy(design.Policy().TotalSupply(), approveBoxList)
 	if err := policy.IsValid(nil); err != nil {
 		return nil, ErrInvalid(policy, err), nil
 	}

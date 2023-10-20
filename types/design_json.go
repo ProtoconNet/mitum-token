@@ -41,5 +41,5 @@ func (d *Design) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 		return e.Wrap(err)
 	}
 
-	return d.unmarshal(enc, u.Hint, u.Symbol, u.Name, u.Policy)
+	return d.unpack(enc, u.Hint, u.Symbol, u.Name, u.Policy)
 }

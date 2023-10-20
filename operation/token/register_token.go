@@ -18,9 +18,9 @@ var (
 
 type RegisterTokenFact struct {
 	TokenFact
-	symbol      currencytypes.CurrencyID
-	name        string
-	totalSupply common.Big
+	symbol        currencytypes.CurrencyID
+	name          string
+	initialSupply common.Big
 }
 
 func NewRegisterTokenFact(
@@ -29,15 +29,15 @@ func NewRegisterTokenFact(
 	currency currencytypes.CurrencyID,
 	symbol currencytypes.CurrencyID,
 	name string,
-	totalSupply common.Big,
+	initialSupply common.Big,
 ) RegisterTokenFact {
 	fact := RegisterTokenFact{
 		TokenFact: NewTokenFact(
 			base.NewBaseFact(RegisterTokenFactHint, token), sender, contract, currency,
 		),
-		symbol:      symbol,
-		name:        name,
-		totalSupply: totalSupply,
+		symbol:        symbol,
+		name:          name,
+		initialSupply: initialSupply,
 	}
 	fact.SetHash(fact.GenerateHash())
 	return fact
@@ -54,7 +54,7 @@ func (fact RegisterTokenFact) IsValid(b []byte) error {
 		return e.Wrap(errors.Errorf("empty symbol"))
 	}
 
-	if !fact.totalSupply.OverNil() {
+	if !fact.initialSupply.OverNil() {
 		return e.Wrap(errors.Errorf("nil big"))
 	}
 
@@ -73,7 +73,7 @@ func (fact RegisterTokenFact) Bytes() []byte {
 		fact.TokenFact.Bytes(),
 		fact.symbol.Bytes(),
 		[]byte(fact.name),
-		fact.totalSupply.Bytes(),
+		fact.initialSupply.Bytes(),
 	)
 }
 
@@ -85,8 +85,8 @@ func (fact RegisterTokenFact) Symbol() currencytypes.CurrencyID {
 	return fact.symbol
 }
 
-func (fact RegisterTokenFact) TotalSupply() common.Big {
-	return fact.totalSupply
+func (fact RegisterTokenFact) InitialSupply() common.Big {
+	return fact.initialSupply
 }
 
 type RegisterToken struct {

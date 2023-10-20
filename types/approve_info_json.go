@@ -1,9 +1,6 @@
 package types
 
 import (
-	"encoding/json"
-
-	"github.com/ProtoconNet/mitum-currency/v3/common"
 	"github.com/ProtoconNet/mitum-token/utils"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
@@ -13,22 +10,22 @@ import (
 
 type ApproveInfoJSONMarshaler struct {
 	hint.BaseHinter
-	Account  base.Address          `json:"account"`
-	Approved map[string]common.Big `json:"approved"`
+	Account base.Address `json:"account"`
+	Amount  string       `json:"amount"`
 }
 
 func (a ApproveInfo) MarshalJSON() ([]byte, error) {
 	return util.MarshalJSON(ApproveInfoJSONMarshaler{
 		BaseHinter: a.BaseHinter,
 		Account:    a.account,
-		Approved:   a.approved,
+		Amount:     a.amount.String(),
 	})
 }
 
 type ApproveInfoJSONUnmarshaler struct {
-	Hint     hint.Hint       `json:"_hint"`
-	Account  string          `json:"account"`
-	Approved json.RawMessage `json:"approved"`
+	Hint    hint.Hint `json:"_hint"`
+	Account string    `json:"account"`
+	Amount  string    `json:"amount"`
 }
 
 func (a *ApproveInfo) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
@@ -39,5 +36,5 @@ func (a *ApproveInfo) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 		return e.Wrap(err)
 	}
 
-	return a.unmarshal(enc, u.Hint, u.Account, u.Approved)
+	return a.unpack(enc, u.Hint, u.Account, u.Amount)
 }

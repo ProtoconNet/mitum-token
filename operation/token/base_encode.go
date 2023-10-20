@@ -8,7 +8,7 @@ import (
 	"github.com/ProtoconNet/mitum2/util/encoder"
 )
 
-func (fact *TokenFact) unmarshal(enc encoder.Encoder,
+func (fact *TokenFact) unpack(enc encoder.Encoder,
 	sa, ca, cid string,
 ) error {
 	e := util.StringError(utils.ErrStringUnmarshal(*fact))

@@ -34,7 +34,7 @@ func (fact *MintFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 		return e.Wrap(err)
 	}
 
-	return fact.unmarshal(enc,
+	return fact.unpack(enc,
 		uf.Receiver,
 		uf.Amount,
 	)

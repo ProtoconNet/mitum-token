@@ -10,9 +10,9 @@ import (
 
 type RegisterTokenFactJSONMarshaler struct {
 	TokenFactJSONMarshaler
-	Symbol      currencytypes.CurrencyID `json:"symbol"`
-	Name        string                   `json:"name"`
-	TotalSupply common.Big               `json:"total_supply"`
+	Symbol        currencytypes.CurrencyID `json:"symbol"`
+	Name          string                   `json:"name"`
+	InitialSupply common.Big               `json:"initial_supply"`
 }
 
 func (fact RegisterTokenFact) MarshalJSON() ([]byte, error) {
@@ -20,14 +20,14 @@ func (fact RegisterTokenFact) MarshalJSON() ([]byte, error) {
 		TokenFactJSONMarshaler: fact.TokenFact.JSONMarshaler(),
 		Symbol:                 fact.symbol,
 		Name:                   fact.name,
-		TotalSupply:            fact.totalSupply,
+		InitialSupply:          fact.initialSupply,
 	})
 }
 
 type RegisterTokenFactJSONUnMarshaler struct {
-	Symbol      string `json:"symbol"`
-	Name        string `json:"name"`
-	TotalSupply string `json:"total_supply"`
+	Symbol        string `json:"symbol"`
+	Name          string `json:"name"`
+	InitialSupply string `json:"initial_supply"`
 }
 
 func (fact *RegisterTokenFact) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
@@ -42,9 +42,9 @@ func (fact *RegisterTokenFact) DecodeJSON(b []byte, enc *jsonenc.Encoder) error 
 		return e.Wrap(err)
 	}
 
-	return fact.unmarshal(enc,
+	return fact.unpack(enc,
 		uf.Symbol,
 		uf.Name,
-		uf.TotalSupply,
+		uf.InitialSupply,
 	)
 }

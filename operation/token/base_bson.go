@@ -65,7 +65,7 @@ func (fact *TokenFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 	}
 	fact.BaseHinter = hint.NewBaseHinter(ht)
 
-	return fact.unmarshal(enc,
+	return fact.unpack(enc,
 		uf.Sender,
 		uf.Contract,
 		uf.Currency,

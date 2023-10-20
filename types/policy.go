@@ -16,10 +16,10 @@ var PolicyHint = hint.MustNewHint("mitum-token-policy-v0.0.1")
 type Policy struct {
 	hint.BaseHinter
 	totalSupply common.Big
-	approveList []ApproveInfo
+	approveList []ApproveBox
 }
 
-func NewPolicy(totalSupply common.Big, approveList []ApproveInfo) Policy {
+func NewPolicy(totalSupply common.Big, approveList []ApproveBox) Policy {
 	return Policy{
 		BaseHinter:  hint.NewBaseHinter(PolicyHint),
 		totalSupply: totalSupply,
@@ -74,6 +74,6 @@ func (p Policy) TotalSupply() common.Big {
 	return p.totalSupply
 }
 
-func (p Policy) ApproveList() []ApproveInfo {
+func (p Policy) ApproveList() []ApproveBox {
 	return p.approveList
 }

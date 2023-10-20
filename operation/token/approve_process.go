@@ -8,7 +8,6 @@ import (
 	"github.com/ProtoconNet/mitum-token/types"
 	"github.com/ProtoconNet/mitum-token/utils"
 
-	"github.com/ProtoconNet/mitum-currency/v3/common"
 	currencystate "github.com/ProtoconNet/mitum-currency/v3/state"
 	"github.com/ProtoconNet/mitum-currency/v3/state/currency"
 	extstate "github.com/ProtoconNet/mitum-currency/v3/state/extension"
@@ -149,36 +148,34 @@ func (opp *ApproveProcessor) Process(
 		return nil, ErrBaseOperationProcess(err, "token design value not found, %s", fact.Contract().String()), nil
 	}
 
-	al := design.Policy().ApproveList()
+	approveBoxList := design.Policy().ApproveList()
 
 	amount := fact.Amount()
 
 	idx := -1
-	for i, ap := range al {
-		if ap.Account().Equal(fact.Sender()) {
+	for i, apb := range approveBoxList {
+		if apb.Account().Equal(fact.Sender()) {
 			idx = i
 			break
 		}
 	}
 
 	if -1 < idx {
-		if big, found := al[idx].Approved()[fact.approved.String()]; found {
-			amount = amount.Add(big)
+		if aprInfo := approveBoxList[idx].GetApproveInfo(fact.approved); aprInfo != nil {
+			amount = amount.Add(aprInfo.Amount())
 		}
-
-		m := al[idx].Approved()
-		m[fact.Approved().String()] = amount
-
-		al[idx] = types.NewApproveInfo(al[idx].Account(), m)
+		var apb = approveBoxList[idx]
+		apb.SetApproveInfo(types.NewApproveInfo(fact.approved, amount))
+		approveBoxList[idx] = apb
 	} else {
-		m := map[string]common.Big{}
-		m[fact.Approved().String()] = amount
-		al = append(al, types.NewApproveInfo(fact.Sender(), m))
+		approveBoxList = append(
+			approveBoxList,
+			types.NewApproveBox(fact.Sender(), []types.ApproveInfo{types.NewApproveInfo(fact.Approved(), fact.Amount())}))
 	}
 
 	policy := types.NewPolicy(
 		design.Policy().TotalSupply(),
-		al,
+		approveBoxList,
 	)
 	if err := policy.IsValid(nil); err != nil {
 		return nil, ErrInvalid(policy, err), nil

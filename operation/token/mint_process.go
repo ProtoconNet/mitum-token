@@ -3,6 +3,7 @@ package token
 import (
 	"context"
 	"fmt"
+	"github.com/ProtoconNet/mitum-currency/v3/common"
 	"sync"
 
 	"github.com/ProtoconNet/mitum-token/types"
@@ -94,8 +95,8 @@ func (opp *MintProcessor) PreProcess(
 		return nil, ErrBaseOperationProcess(err, "contract value not found, %s", fact.Contract().String()), nil
 	}
 
-	if !ca.Owner().Equal(fact.Sender()) {
-		return nil, ErrBaseOperationProcess(nil, "not contract account owner", fact.Sender().String()), nil
+	if !(ca.Owner().Equal(fact.sender) || ca.IsOperator(fact.Sender())) {
+		return nil, ErrBaseOperationProcess(nil, "sender is neither the owner nor the operator of the target contract account, %q", fact.sender), nil
 	}
 
 	if err := currencystate.CheckExistsState(currency.StateKeyCurrencyDesign(fact.Currency()), getStateFunc); err != nil {
@@ -172,9 +173,21 @@ func (opp *MintProcessor) Process(
 		state.NewDesignStateValue(de),
 	)
 
+	rb := common.ZeroBig
+	switch st, found, err := getStateFunc(g.TokenBalance(fact.Receiver())); {
+	case err != nil:
+		return nil, ErrBaseOperationProcess(err, "failed to check token balance, %s, %s", fact.Contract(), fact.Receiver()), nil
+	case found:
+		b, err := state.StateTokenBalanceValue(st)
+		if err != nil {
+			return nil, ErrBaseOperationProcess(err, "failed to get token balance value from state, %s, %s", fact.Contract(), fact.Receiver()), nil
+		}
+		rb = b
+	}
+
 	sts[2] = currencystate.NewStateMergeValue(
 		g.TokenBalance(fact.Receiver()),
-		state.NewTokenBalanceStateValue(fact.Amount()),
+		state.NewTokenBalanceStateValue(rb.Add(fact.Amount())),
 	)
 
 	return sts, nil, nil

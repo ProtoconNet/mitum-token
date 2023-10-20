@@ -13,9 +13,9 @@ import (
 
 type RegisterTokenCommand struct {
 	OperationCommand
-	Symbol      currencycmds.CurrencyIDFlag `arg:"" name:"symbol" help:"token symbol" required:"true"`
-	Name        string                      `arg:"" name:"name" help:"token name" required:"true"`
-	TotalSupply currencycmds.BigFlag        `arg:"" name:"total-supply" help:"total supply of token" required:"true"`
+	Symbol        currencycmds.CurrencyIDFlag `arg:"" name:"symbol" help:"token symbol" required:"true"`
+	Name          string                      `arg:"" name:"name" help:"token name" required:"true"`
+	InitialSupply currencycmds.BigFlag        `arg:"" name:"initial-supply" help:"initial supply of token" required:"true"`
 }
 
 func (cmd *RegisterTokenCommand) Run(pctx context.Context) error { // nolint:dupl
@@ -48,7 +48,7 @@ func (cmd *RegisterTokenCommand) createOperation() (base.Operation, error) { // 
 		cmd.sender, cmd.contract,
 		cmd.Currency.CID, cmd.Symbol.CID,
 		cmd.Name,
-		cmd.TotalSupply.Big,
+		cmd.InitialSupply.Big,
 	)
 
 	op := token.NewRegisterToken(fact)

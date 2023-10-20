@@ -8,7 +8,7 @@ import (
 	"github.com/ProtoconNet/mitum2/util/encoder"
 )
 
-func (fact *BurnFact) unmarshal(enc encoder.Encoder,
+func (fact *BurnFact) unpack(enc encoder.Encoder,
 	ta, am string,
 ) error {
 	e := util.StringError(utils.ErrStringUnmarshal(*fact))

@@ -8,26 +8,26 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-func (a ApproveInfo) MarshalBSON() ([]byte, error) {
+func (a ApproveBox) MarshalBSON() ([]byte, error) {
 	return bsonenc.Marshal(
 		bson.M{
-			"_hint":   a.Hint().String(),
-			"account": a.account,
-			"amount":  a.amount.String(),
+			"_hint":    a.Hint().String(),
+			"account":  a.account,
+			"approved": a.approved,
 		},
 	)
 }
 
-type ApproveInfoBSONUnmarshaler struct {
-	Hint    string `bson:"_hint"`
-	Account string `bson:"account"`
-	Amount  string `bson:"amount"`
+type ApproveBoxBSONUnmarshaler struct {
+	Hint     string   `bson:"_hint"`
+	Account  string   `bson:"account"`
+	Approved bson.Raw `bson:"approved"`
 }
 
-func (a *ApproveInfo) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
+func (a *ApproveBox) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 	e := util.StringError(utils.ErrStringDecodeBSON(*a))
 
-	var u ApproveInfoBSONUnmarshaler
+	var u ApproveBoxBSONUnmarshaler
 	if err := enc.Unmarshal(b, &u); err != nil {
 		return e.Wrap(err)
 	}
@@ -37,5 +37,5 @@ func (a *ApproveInfo) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 		return e.Wrap(err)
 	}
 
-	return a.unpack(enc, ht, u.Account, u.Amount)
+	return a.unpack(enc, ht, u.Account, u.Approved)
 }

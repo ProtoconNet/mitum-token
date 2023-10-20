@@ -41,7 +41,7 @@ func (fact *TokenFact) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 
 	fact.BaseFact.SetJSONUnmarshaler(uf.BaseFactJSONUnmarshaler)
 
-	return fact.unmarshal(enc,
+	return fact.unpack(enc,
 		uf.Sender,
 		uf.Contract,
 		uf.Currency,

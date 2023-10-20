@@ -94,8 +94,8 @@ func (opp *RegisterTokenProcessor) PreProcess(
 		return nil, ErrStateNotFound("contract value", fact.Contract().String(), err), nil
 	}
 
-	if !ca.Owner().Equal(fact.Sender()) {
-		return nil, ErrBaseOperationProcess(nil, "not contract account owner, %s", fact.Sender().String()), nil
+	if !(ca.Owner().Equal(fact.sender) || ca.IsOperator(fact.Sender())) {
+		return nil, ErrBaseOperationProcess(nil, "sender is neither the owner nor the operator of the target contract account, %q", fact.sender), nil
 	}
 
 	if ca.IsActive() {
@@ -112,7 +112,7 @@ func (opp *RegisterTokenProcessor) PreProcess(
 		return nil, ErrStateAlreadyExists("token design", fact.Contract().String(), err), nil
 	}
 
-	if fact.TotalSupply().OverZero() {
+	if fact.InitialSupply().OverZero() {
 		if err := currencystate.CheckNotExistsState(g.TokenBalance(ca.Owner()), getStateFunc); err != nil {
 			return nil, ErrStateAlreadyExists("token balance", utils.JoinStringers(fact.Contract(), ca.Owner()), err), nil
 		}
@@ -146,7 +146,7 @@ func (opp *RegisterTokenProcessor) Process(
 	}
 	sts[0] = v
 
-	policy := types.NewPolicy(fact.TotalSupply(), []types.ApproveInfo{})
+	policy := types.NewPolicy(fact.InitialSupply(), []types.ApproveBox{})
 	if err := policy.IsValid(nil); err != nil {
 		return nil, ErrInvalid(policy, err), nil
 	}
@@ -177,10 +177,10 @@ func (opp *RegisterTokenProcessor) Process(
 		extstate.NewContractAccountStateValue(nca),
 	)
 
-	if fact.TotalSupply().OverZero() {
+	if fact.InitialSupply().OverZero() {
 		sts = append(sts, currencystate.NewStateMergeValue(
 			g.TokenBalance(fact.Sender()),
-			state.NewTokenBalanceStateValue(fact.TotalSupply()),
+			state.NewTokenBalanceStateValue(fact.InitialSupply()),
 		))
 	}
 

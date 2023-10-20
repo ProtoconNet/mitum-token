@@ -37,5 +37,5 @@ func (p *Policy) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 		return e.Wrap(err)
 	}
 
-	return p.unmarshal(enc, ht, u.TotalSupply, u.ApproveList)
+	return p.unpack(enc, ht, u.TotalSupply, u.ApproveList)
 }

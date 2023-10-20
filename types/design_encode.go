@@ -9,7 +9,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (d *Design) unmarshal(enc encoder.Encoder, ht hint.Hint, symbol, name string, bp []byte) error {
+func (d *Design) unpack(enc encoder.Encoder, ht hint.Hint, symbol, name string, bp []byte) error {
 	e := util.StringError(utils.ErrStringUnmarshal(*d))
 
 	d.BaseHinter = hint.NewBaseHinter(ht)

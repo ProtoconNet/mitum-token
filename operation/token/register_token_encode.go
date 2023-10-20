@@ -8,7 +8,7 @@ import (
 	"github.com/ProtoconNet/mitum2/util/encoder"
 )
 
-func (fact *RegisterTokenFact) unmarshal(enc encoder.Encoder,
+func (fact *RegisterTokenFact) unpack(enc encoder.Encoder,
 	symbol, name, ts string,
 ) error {
 	e := util.StringError(utils.ErrStringUnmarshal(*fact))
@@ -20,7 +20,7 @@ func (fact *RegisterTokenFact) unmarshal(enc encoder.Encoder,
 	if err != nil {
 		return e.Wrap(err)
 	}
-	fact.totalSupply = big
+	fact.initialSupply = big
 
 	return nil
 }

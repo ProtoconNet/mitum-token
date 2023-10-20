@@ -8,7 +8,7 @@ import (
 	"github.com/ProtoconNet/mitum2/util/hint"
 )
 
-func (p *Policy) unmarshal(enc encoder.Encoder, ht hint.Hint, ts string, bap []byte) error {
+func (p *Policy) unpack(enc encoder.Encoder, ht hint.Hint, ts string, bap []byte) error {
 	e := util.StringError(utils.ErrStringUnmarshal(*p))
 
 	p.BaseHinter = hint.NewBaseHinter(ht)
@@ -24,11 +24,11 @@ func (p *Policy) unmarshal(enc encoder.Encoder, ht hint.Hint, ts string, bap []b
 		return e.Wrap(err)
 	}
 
-	al := make([]ApproveInfo, len(hap))
+	al := make([]ApproveBox, len(hap))
 	for i, h := range hap {
-		ap, ok := h.(ApproveInfo)
+		ap, ok := h.(ApproveBox)
 		if !ok {
-			return e.Wrap(util.ErrInvalid.Errorf("expected %T, not %T", ApproveInfo{}, h))
+			return e.Wrap(util.ErrInvalid.Errorf("expected %T, not %T", ApproveBox{}, h))
 		}
 
 		al[i] = ap
