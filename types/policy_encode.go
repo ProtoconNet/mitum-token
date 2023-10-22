@@ -9,7 +9,7 @@ import (
 )
 
 func (p *Policy) unpack(enc encoder.Encoder, ht hint.Hint, ts string, bap []byte) error {
-	e := util.StringError(utils.ErrStringUnmarshal(*p))
+	e := util.StringError(utils.ErrStringUnPack(*p))
 
 	p.BaseHinter = hint.NewBaseHinter(ht)
 

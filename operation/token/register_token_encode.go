@@ -11,7 +11,7 @@ import (
 func (fact *RegisterTokenFact) unpack(enc encoder.Encoder,
 	symbol, name, ts string,
 ) error {
-	e := util.StringError(utils.ErrStringUnmarshal(*fact))
+	e := util.StringError(utils.ErrStringUnPack(*fact))
 
 	fact.symbol = currencytypes.CurrencyID(symbol)
 	fact.name = name

@@ -11,7 +11,7 @@ import (
 func (fact *MintFact) unpack(enc encoder.Encoder,
 	ra, am string,
 ) error {
-	e := util.StringError(utils.ErrStringUnmarshal(*fact))
+	e := util.StringError(utils.ErrStringUnPack(*fact))
 
 	switch a, err := base.DecodeAddress(ra, enc); {
 	case err != nil:

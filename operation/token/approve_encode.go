@@ -11,7 +11,7 @@ import (
 func (fact *ApproveFact) unpack(enc encoder.Encoder,
 	ap, am string,
 ) error {
-	e := util.StringError(utils.ErrStringUnmarshal(*fact))
+	e := util.StringError(utils.ErrStringUnPack(*fact))
 
 	switch a, err := base.DecodeAddress(ap, enc); {
 	case err != nil:

@@ -10,7 +10,7 @@ import (
 )
 
 func (a *ApproveInfo) unpack(enc encoder.Encoder, ht hint.Hint, ac, am string) error {
-	e := util.StringError(utils.ErrStringUnmarshal(*a))
+	e := util.StringError(utils.ErrStringUnPack(*a))
 
 	a.BaseHinter = hint.NewBaseHinter(ht)
 

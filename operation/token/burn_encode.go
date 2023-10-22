@@ -11,7 +11,7 @@ import (
 func (fact *BurnFact) unpack(enc encoder.Encoder,
 	ta, am string,
 ) error {
-	e := util.StringError(utils.ErrStringUnmarshal(*fact))
+	e := util.StringError(utils.ErrStringUnPack(*fact))
 
 	switch a, err := base.DecodeAddress(ta, enc); {
 	case err != nil:

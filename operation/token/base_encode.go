@@ -11,7 +11,7 @@ import (
 func (fact *TokenFact) unpack(enc encoder.Encoder,
 	sa, ca, cid string,
 ) error {
-	e := util.StringError(utils.ErrStringUnmarshal(*fact))
+	e := util.StringError(utils.ErrStringUnPack(*fact))
 
 	fact.currency = types.CurrencyID(cid)
 

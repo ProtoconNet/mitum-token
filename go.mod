@@ -2,11 +2,8 @@ module github.com/ProtoconNet/mitum-token
 
 go 1.20
 
-replace github.com/ProtoconNet/mitum-currency/v3 => /Users/soonkukkang/go/src/github.com/ProtoconNet/mitum-currency
-replace github.com/ProtoconNet/mitum2 => /Users/soonkukkang/go/src/github.com/ProtoconNet/mitum2
-
 require (
-	github.com/ProtoconNet/mitum-currency/v3 v3.0.0-alpha.0.20231013162211-895efedc35ae
+	github.com/ProtoconNet/mitum-currency/v3 v3.0.0-alpha.0.20231022144435-dd60a578acd0
 	github.com/ProtoconNet/mitum2 v0.0.0-20231006031328-cc14784a72b1
 	github.com/alecthomas/kong v0.8.0
 	github.com/arl/statsviz v0.5.2

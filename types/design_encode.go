@@ -10,7 +10,7 @@ import (
 )
 
 func (d *Design) unpack(enc encoder.Encoder, ht hint.Hint, symbol, name string, bp []byte) error {
-	e := util.StringError(utils.ErrStringUnmarshal(*d))
+	e := util.StringError(utils.ErrStringUnPack(*d))
 
 	d.BaseHinter = hint.NewBaseHinter(ht)
 	d.symbol = types.CurrencyID(symbol)
@@ -19,7 +19,7 @@ func (d *Design) unpack(enc encoder.Encoder, ht hint.Hint, symbol, name string, 
 	if hinter, err := enc.Decode(bp); err != nil {
 		return e.Wrap(err)
 	} else if p, ok := hinter.(Policy); !ok {
-		return e.Wrap(errors.Errorf("expected %T, not %T", Policy{}, hinter))
+		return e.Wrap(errors.Errorf(utils.ErrStringTypeCast(Policy{}, hinter)))
 	} else {
 		d.policy = p
 	}

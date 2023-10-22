@@ -17,8 +17,8 @@ func ErrStringDecodeJSON(t any) string {
 	return fmt.Sprintf("failed to decode json of %T", t)
 }
 
-func ErrStringUnmarshal(t any) string {
-	return fmt.Sprintf("failed to unmarshal %T", t)
+func ErrStringUnPack(t any) string {
+	return fmt.Sprintf("failed to unpack %T", t)
 }
 
 func ErrStringTypeCast(expected any, received any) string {
