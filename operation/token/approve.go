@@ -59,8 +59,8 @@ func (fact ApproveFact) IsValid(b []byte) error {
 		return e.Wrap(errors.Errorf("contract address is same with approved, %s", fact.approved))
 	}
 
-	if !fact.amount.OverZero() {
-		return e.Wrap(errors.Errorf("zero amount"))
+	if !fact.amount.OverNil() {
+		return e.Wrap(errors.Errorf("under zero"))
 	}
 
 	if err := common.IsValidOperationFact(fact, b); err != nil {

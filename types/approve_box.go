@@ -80,18 +80,26 @@ func (a *ApproveBox) RemoveApproveInfo(ad base.Address) error {
 		if ad.Equal(a.approved[i].Account()) {
 			nApproved = append(nApproved, a.approved[:i]...)
 			nApproved = append(nApproved, a.approved[i+1:]...)
+
+			a.approved = nApproved
 			return nil
 		}
 		if i == len(a.approved)-1 {
 			return errors.Errorf("not found approved, %s", ad)
 		}
 	}
+
 	return nil
 }
 
 func (a *ApproveBox) SetApproveInfo(ap ApproveInfo) {
 	var approved []ApproveInfo
 	var count int
+	if len(a.approved) < 1 {
+		approved = append(approved, ap)
+		return
+	}
+
 	for i := range a.approved {
 		if ap.Account().Equal(a.approved[i].Account()) {
 			approved = append(approved, ap)

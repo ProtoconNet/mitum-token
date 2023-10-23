@@ -134,7 +134,7 @@ func (opp *TransferFromProcessor) PreProcess(
 	if idx < 0 {
 		return nil, ErrBaseOperationProcess(
 			err,
-			"sender have not approved %s, %s",
+			"sender has not approved %s, %s",
 			fact.Contract(), fact.Sender(),
 		), nil
 	}

@@ -2,6 +2,7 @@ package types
 
 import (
 	"bytes"
+	"github.com/ProtoconNet/mitum2/base"
 	"sort"
 
 	"github.com/ProtoconNet/mitum-currency/v3/common"
@@ -76,4 +77,55 @@ func (p Policy) TotalSupply() common.Big {
 
 func (p Policy) ApproveList() []ApproveBox {
 	return p.approveList
+}
+
+func (p Policy) GetApproveBox(acc base.Address) *ApproveBox {
+	var approvedBox ApproveBox
+	idx := -1
+	for i, apb := range p.approveList {
+		if apb.Account().Equal(acc) {
+			idx = i
+			approvedBox = apb
+			break
+		}
+	}
+	if idx == -1 {
+		return nil
+	}
+	return &approvedBox
+}
+
+func (p *Policy) MergeApproveBox(apb ApproveBox) {
+	var approvedList = make([]ApproveBox, len(p.approveList))
+	copy(approvedList, p.approveList)
+	idx := -1
+	for i, apb := range approvedList {
+		if apb.Account().Equal(apb.Account()) {
+			idx = i
+			break
+		}
+	}
+	if -1 < idx {
+		approvedList[idx] = apb
+	} else {
+		approvedList = append(approvedList, apb)
+	}
+	p.approveList = approvedList
+}
+
+func (p *Policy) RemoveApproveBox(acc base.Address) {
+	var approvedList []ApproveBox
+
+	idx := -1
+	for i, apb := range approvedList {
+		if apb.Account().Equal(acc) {
+			idx = i
+			break
+		}
+	}
+	if -1 < idx {
+		approvedList = append(approvedList, p.approveList[:idx]...)
+		approvedList = append(approvedList, p.approveList[idx+1:]...)
+	}
+	p.approveList = approvedList
 }

@@ -77,7 +77,7 @@ func (opp *ApproveProcessor) PreProcess(
 	}
 
 	if err := currencystate.CheckExistsState(currency.StateKeyAccount(fact.Sender()), getStateFunc); err != nil {
-		return nil, ErrBaseOperationProcess(err, "sender not found, %s", fact.Sender().String()), nil
+		return nil, ErrBaseOperationProcess(err, "sender account not found, %s", fact.Sender().String()), nil
 	}
 
 	if err := currencystate.CheckNotExistsState(extstate.StateKeyContractAccount(fact.Sender()), getStateFunc); err != nil {
@@ -85,7 +85,7 @@ func (opp *ApproveProcessor) PreProcess(
 	}
 
 	if err := currencystate.CheckExistsState(extstate.StateKeyContractAccount(fact.Contract()), getStateFunc); err != nil {
-		return nil, ErrBaseOperationProcess(err, "contract not found, %s", fact.Contract().String()), nil
+		return nil, ErrBaseOperationProcess(err, "contract account not found, %s", fact.Contract().String()), nil
 	}
 
 	if err := currencystate.CheckExistsState(currency.StateKeyCurrencyDesign(fact.Currency()), getStateFunc); err != nil {
@@ -93,20 +93,29 @@ func (opp *ApproveProcessor) PreProcess(
 	}
 
 	if err := currencystate.CheckExistsState(currency.StateKeyAccount(fact.Approved()), getStateFunc); err != nil {
-		return nil, ErrBaseOperationProcess(err, "approved not found, %s", fact.Approved().String()), nil
+		return nil, ErrBaseOperationProcess(err, "approved account not found, %s", fact.Approved().String()), nil
 	}
 
 	if err := currencystate.CheckNotExistsState(extstate.StateKeyContractAccount(fact.Approved()), getStateFunc); err != nil {
-		return nil, ErrBaseOperationProcess(err, "contract cannot become approved account, %s", fact.Approved().String()), nil
+		return nil, ErrBaseOperationProcess(err, "contract account cannot become approved account, %s", fact.Approved().String()), nil
 	}
 
-	g := state.NewStateKeyGenerator(fact.Contract())
+	keyGenerator := state.NewStateKeyGenerator(fact.Contract())
 
-	if err := currencystate.CheckExistsState(g.Design(), getStateFunc); err != nil {
+	if st, err := currencystate.ExistsState(keyGenerator.Design(), "key of design", getStateFunc); err != nil {
 		return nil, ErrBaseOperationProcess(err, "token design not found, %s", fact.Contract().String()), nil
+	} else if design, err := state.StateDesignValue(st); err != nil {
+		return nil, ErrBaseOperationProcess(err, "token design value not found, %s", fact.Contract().String()), nil
+	} else if apb := design.Policy().GetApproveBox(fact.Sender()); apb == nil {
+		if fact.Amount().IsZero() {
+			return nil, ErrBaseOperationProcess(err, "sender account has approved no accounts, %s", fact.Sender().String()), nil
+		}
+	} else if aprInfo := apb.GetApproveInfo(fact.Approved()); aprInfo == nil {
+		if fact.Amount().IsZero() {
+			return nil, ErrBaseOperationProcess(err, "approved account has not been approved, %s", fact.Approved().String()), nil
+		}
 	}
-
-	if err := currencystate.CheckExistsState(g.TokenBalance(fact.Sender()), getStateFunc); err != nil {
+	if err := currencystate.CheckExistsState(keyGenerator.TokenBalance(fact.Sender()), getStateFunc); err != nil {
 		return nil, ErrBaseOperationProcess(err, "token balance not found, %s", utils.JoinStringers(fact.Contract(), fact.Sender())), nil
 	}
 
@@ -128,68 +137,49 @@ func (opp *ApproveProcessor) Process(
 		return nil, nil, e.Wrap(errors.Errorf(utils.ErrStringTypeCast(ApproveFact{}, op.Fact())))
 	}
 
-	g := state.NewStateKeyGenerator(fact.Contract())
+	keyGenerator := state.NewStateKeyGenerator(fact.Contract())
 
-	sts := make([]base.StateMergeValue, 2)
+	var sts []base.StateMergeValue
 
 	v, baseErr, err := calculateCurrencyFee(fact.TokenFact, getStateFunc)
 	if baseErr != nil || err != nil {
 		return nil, baseErr, err
 	}
-	sts[0] = v
+	sts = append(sts, v)
 
-	st, err := currencystate.ExistsState(g.Design(), "key of design", getStateFunc)
-	if err != nil {
-		return nil, ErrBaseOperationProcess(err, "token design not found, %s", fact.Contract().String()), nil
-	}
-
-	design, err := state.StateDesignValue(st)
-	if err != nil {
-		return nil, ErrBaseOperationProcess(err, "token design value not found, %s", fact.Contract().String()), nil
-	}
-
-	approveBoxList := design.Policy().ApproveList()
-
-	amount := fact.Amount()
-
-	idx := -1
-	for i, apb := range approveBoxList {
-		if apb.Account().Equal(fact.Sender()) {
-			idx = i
-			break
-		}
-	}
-
-	if -1 < idx {
-		if aprInfo := approveBoxList[idx].GetApproveInfo(fact.approved); aprInfo != nil {
-			amount = amount.Add(aprInfo.Amount())
-		}
-		var apb = approveBoxList[idx]
-		apb.SetApproveInfo(types.NewApproveInfo(fact.approved, amount))
-		approveBoxList[idx] = apb
+	st, _ := currencystate.ExistsState(keyGenerator.Design(), "key of design", getStateFunc)
+	design, _ := state.StateDesignValue(st)
+	apb := design.Policy().GetApproveBox(fact.Sender())
+	if apb == nil {
+		a := types.NewApproveBox(fact.Sender(), []types.ApproveInfo{types.NewApproveInfo(fact.approved, fact.Amount())})
+		apb = &a
 	} else {
-		approveBoxList = append(
-			approveBoxList,
-			types.NewApproveBox(fact.Sender(), []types.ApproveInfo{types.NewApproveInfo(fact.Approved(), fact.Amount())}))
+		if fact.Amount().IsZero() {
+			err := apb.RemoveApproveInfo(fact.Approved())
+			if err != nil {
+				return nil, ErrBaseOperationProcess(err, "remove approved, %s", fact.Approved().String()), nil
+			}
+		} else {
+			apb.SetApproveInfo(types.NewApproveInfo(fact.approved, fact.Amount()))
+		}
 	}
 
-	policy := types.NewPolicy(
-		design.Policy().TotalSupply(),
-		approveBoxList,
-	)
+	policy := design.Policy()
+	policy.MergeApproveBox(*apb)
 	if err := policy.IsValid(nil); err != nil {
 		return nil, ErrInvalid(policy, err), nil
 	}
-
 	de := types.NewDesign(design.Symbol(), design.Name(), policy)
 	if err := de.IsValid(nil); err != nil {
 		return nil, ErrInvalid(de, err), nil
 	}
-
-	sts[1] = currencystate.NewStateMergeValue(
-		g.Design(),
+	sts = append(sts, currencystate.NewStateMergeValue(
+		keyGenerator.Design(),
 		state.NewDesignStateValue(de),
-	)
+	))
+	if len(sts) != 2 {
+		return nil, ErrBaseOperationProcess(nil, "insufficient state generated"), nil
+	}
 
 	return sts, nil, nil
 }
