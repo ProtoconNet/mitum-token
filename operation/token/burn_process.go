@@ -90,14 +90,7 @@ func (opp *BurnProcessor) PreProcess(
 	}
 
 	if !fact.Sender().Equal(fact.Target()) {
-		ca, err := extstate.StateContractAccountValue(st)
-		if err != nil {
-			return nil, ErrBaseOperationProcess(err, "contract value not found, %s", fact.Contract().String()), nil
-		}
-
-		if !ca.Owner().Equal(fact.Sender()) {
-			return nil, ErrBaseOperationProcess(nil, "not contract account owner, neither token owner, %s", fact.Sender().String()), nil
-		}
+		return nil, ErrBaseOperationProcess(nil, "not token owner, %s", fact.Sender().String()), nil
 	}
 
 	if err := currencystate.CheckExistsState(currency.StateKeyCurrencyDesign(fact.Currency()), getStateFunc); err != nil {
