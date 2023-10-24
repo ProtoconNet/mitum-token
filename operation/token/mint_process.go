@@ -48,7 +48,7 @@ func NewMintProcessor() currencytypes.GetNewProcessor {
 		nopp := mintProcessorPool.Get()
 		opp, ok := nopp.(*MintProcessor)
 		if !ok {
-			return nil, e.Wrap(errors.Errorf(utils.ErrStringTypeCast(t, nopp)))
+			return nil, e.Wrap(errors.Errorf(utils.ErrStringTypeCast(&t, nopp)))
 		}
 
 		b, err := base.NewBaseOperationProcessor(

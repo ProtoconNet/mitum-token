@@ -47,7 +47,7 @@ func NewTransferProcessor() currencytypes.GetNewProcessor {
 		nopp := transferProcessorPool.Get()
 		opp, ok := nopp.(*TransferProcessor)
 		if !ok {
-			return nil, e.Wrap(errors.Errorf(utils.ErrStringTypeCast(t, nopp)))
+			return nil, e.Wrap(errors.Errorf(utils.ErrStringTypeCast(&t, nopp)))
 		}
 
 		b, err := base.NewBaseOperationProcessor(

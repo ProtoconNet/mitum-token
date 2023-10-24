@@ -47,7 +47,7 @@ func NewApproveProcessor() currencytypes.GetNewProcessor {
 		nopp := approveProcessorPool.Get()
 		opp, ok := nopp.(*ApproveProcessor)
 		if !ok {
-			return nil, e.Wrap(errors.Errorf(utils.ErrStringTypeCast(t, nopp)))
+			return nil, e.Wrap(errors.Errorf(utils.ErrStringTypeCast(&t, nopp)))
 		}
 
 		b, err := base.NewBaseOperationProcessor(

@@ -48,7 +48,7 @@ func NewTransferFromProcessor() currencytypes.GetNewProcessor {
 		nopp := transferFromProcessorPool.Get()
 		opp, ok := nopp.(*TransferFromProcessor)
 		if !ok {
-			return nil, e.Wrap(errors.Errorf(utils.ErrStringTypeCast(t, nopp)))
+			return nil, e.Wrap(errors.Errorf(utils.ErrStringTypeCast(&t, nopp)))
 		}
 
 		b, err := base.NewBaseOperationProcessor(
@@ -248,7 +248,7 @@ func (opp *TransferFromProcessor) Process(
 		state.NewDesignStateValue(de),
 	)
 
-	st, err = currencystate.ExistsState(g.TokenBalance(fact.Sender()), "key of token balance", getStateFunc)
+	st, err = currencystate.ExistsState(g.TokenBalance(fact.Target()), "key of token balance", getStateFunc)
 	if err != nil {
 		return nil, ErrStateNotFound("token balance", utils.JoinStringers(fact.Contract(), fact.Target()), err), nil
 	}

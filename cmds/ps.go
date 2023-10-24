@@ -17,7 +17,7 @@ import (
 	"github.com/ProtoconNet/mitum2/util/ps"
 )
 
-var PNameOperationProcessorsMap = ps.Name("mitum-dao-operation-processors-map")
+var PNameOperationProcessorsMap = ps.Name("mitum-token-operation-processors-map")
 
 type processorInfo struct {
 	hint      hint.Hint
