@@ -78,7 +78,7 @@ func TokenBalance(st *currencydigest.Database, contract, account string) (common
 		},
 		options.FindOne().SetSort(util.NewBSONFilter("height", -1).D()),
 	); err != nil {
-		return common.NilBig, mitumutil.ErrNotFound.Errorf("token balance, contract %s, account %s", contract, account)
+		return common.NilBig, mitumutil.ErrNotFound.Errorf("token balance by contract %s, account %s", contract, account)
 	}
 
 	return amount, nil
