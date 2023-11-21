@@ -62,14 +62,15 @@ func POperationProcessorsMap(pctx context.Context) (context.Context, error) {
 			return pctx, err
 		}
 
-		if err := set.Add(p.hint, func(height base.Height) (base.OperationProcessor, error) {
-			return opr.New(
-				height,
-				db.State,
-				nil,
-				nil,
-			)
-		}); err != nil {
+		if err := set.Add(p.hint,
+			func(height base.Height, getStatef base.GetStateFunc) (base.OperationProcessor, error) {
+				return opr.New(
+					height,
+					getStatef,
+					nil,
+					nil,
+				)
+			}); err != nil {
 			return pctx, err
 		}
 	}

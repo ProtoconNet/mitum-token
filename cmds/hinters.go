@@ -6,8 +6,8 @@ import (
 	"github.com/ProtoconNet/mitum-token/state"
 	"github.com/ProtoconNet/mitum-token/types"
 	"github.com/ProtoconNet/mitum2/launch"
-	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/encoder"
+	"github.com/pkg/errors"
 )
 
 var Hinters []encoder.DecodeDetail
@@ -62,18 +62,16 @@ func init() {
 	copy(SupportedProposalOperationFactHinters[currencySupportedExtendedLen:], AddedSupportedHinters)
 }
 
-func LoadHinters(enc encoder.Encoder) error {
-	e := util.StringError("failed to add to encoder")
-
-	for _, hinter := range Hinters {
-		if err := enc.Add(hinter); err != nil {
-			return e.Wrap(err)
+func LoadHinters(encs *encoder.Encoders) error {
+	for i := range Hinters {
+		if err := encs.AddDetail(Hinters[i]); err != nil {
+			return errors.Wrap(err, "add hinter to encoder")
 		}
 	}
 
-	for _, hinter := range SupportedProposalOperationFactHinters {
-		if err := enc.Add(hinter); err != nil {
-			return e.Wrap(err)
+	for i := range SupportedProposalOperationFactHinters {
+		if err := encs.AddDetail(SupportedProposalOperationFactHinters[i]); err != nil {
+			return errors.Wrap(err, "add supported proposal operation fact hinter to encoder")
 		}
 	}
 
