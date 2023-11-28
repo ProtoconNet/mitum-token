@@ -108,6 +108,17 @@ func (fact TransferFromFact) Amount() common.Big {
 	return fact.amount
 }
 
+func (fact TransferFromFact) Addresses() ([]base.Address, error) {
+	var as []base.Address
+
+	as = append(as, fact.TokenFact.Sender())
+	as = append(as, fact.TokenFact.Contract())
+	as = append(as, fact.receiver)
+	as = append(as, fact.target)
+
+	return as, nil
+}
+
 type TransferFrom struct {
 	common.BaseOperation
 }

@@ -85,6 +85,16 @@ func (fact MintFact) Amount() common.Big {
 	return fact.amount
 }
 
+func (fact MintFact) Addresses() ([]base.Address, error) {
+	var as []base.Address
+
+	as = append(as, fact.TokenFact.Sender())
+	as = append(as, fact.TokenFact.Contract())
+	as = append(as, fact.receiver)
+
+	return as, nil
+}
+
 type Mint struct {
 	common.BaseOperation
 }
