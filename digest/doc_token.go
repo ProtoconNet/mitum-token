@@ -50,13 +50,13 @@ func (doc TokenDoc) MarshalBSON() ([]byte, error) {
 	return bsonenc.Marshal(m)
 }
 
-type BalanceDoc struct {
+type TokenBalanceDoc struct {
 	mongodbstorage.BaseDoc
 	st     base.State
 	amount common.Big
 }
 
-func NewBalanceDoc(st base.State, enc encoder.Encoder) (*BalanceDoc, error) {
+func NewTokenBalanceDoc(st base.State, enc encoder.Encoder) (*TokenBalanceDoc, error) {
 	balance, err := state.StateTokenBalanceValue(st)
 	if err != nil {
 		return nil, err
@@ -67,14 +67,14 @@ func NewBalanceDoc(st base.State, enc encoder.Encoder) (*BalanceDoc, error) {
 		return nil, err
 	}
 
-	return &BalanceDoc{
+	return &TokenBalanceDoc{
 		BaseDoc: b,
 		st:      st,
 		amount:  balance,
 	}, nil
 }
 
-func (doc BalanceDoc) MarshalBSON() ([]byte, error) {
+func (doc TokenBalanceDoc) MarshalBSON() ([]byte, error) {
 	m, err := doc.BaseDoc.M()
 	if err != nil {
 		return nil, err
