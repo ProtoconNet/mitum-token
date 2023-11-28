@@ -13,7 +13,7 @@ import (
 
 var (
 	DesignStateValueHint = hint.MustNewHint("mitum-token-design-state-value-v0.0.1")
-	DesignSuffix         = ":design"
+	DesignSuffix         = "design"
 )
 
 type DesignStateValue struct {
@@ -67,5 +67,5 @@ func StateDesignValue(st base.State) (*types.Design, error) {
 }
 
 func StateKeyDesign(contract base.Address) string {
-	return fmt.Sprintf("%s%s", StateKeyTokenPrefix(contract), DesignSuffix)
+	return fmt.Sprintf("%s:%s", StateKeyTokenPrefix(contract), DesignSuffix)
 }

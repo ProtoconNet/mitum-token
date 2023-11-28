@@ -13,7 +13,7 @@ import (
 
 var (
 	TokenBalanceStateValueHint = hint.MustNewHint("mitum-token-balance-state-value-v0.0.1")
-	TokenBalanceSuffix         = ":tokenbalance"
+	TokenBalanceSuffix         = "tokenbalance"
 )
 
 type TokenBalanceStateValue struct {
@@ -67,5 +67,5 @@ func StateTokenBalanceValue(st base.State) (common.Big, error) {
 }
 
 func StateKeyTokenBalance(contract base.Address, address base.Address) string {
-	return fmt.Sprintf("%s:%s%s", StateKeyTokenPrefix(contract), address, TokenBalanceSuffix)
+	return fmt.Sprintf("%s:%s:%s", StateKeyTokenPrefix(contract), address, TokenBalanceSuffix)
 }
