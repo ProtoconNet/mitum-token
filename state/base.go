@@ -2,7 +2,6 @@ package state
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 	"strings"
 
 	"github.com/ProtoconNet/mitum2/base"
@@ -30,18 +29,6 @@ func (g StateKeyGenerator) Design() string {
 
 func (g StateKeyGenerator) TokenBalance(address base.Address) string {
 	return StateKeyTokenBalance(g.contract, address)
-}
-
-func ParseStateKey(key string, Prefix string, expected int) ([]string, error) {
-	parsedKey := strings.Split(key, ":")
-	if parsedKey[0] != Prefix[:len(Prefix)-1] {
-		return nil, errors.Errorf("State Key not include Prefix, %s", parsedKey)
-	}
-	if len(parsedKey) < expected {
-		return nil, errors.Errorf("parsed State Key length under %v", expected)
-	} else {
-		return parsedKey, nil
-	}
 }
 
 func IsStateDesignKey(key string) bool {
