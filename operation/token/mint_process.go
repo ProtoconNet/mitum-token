@@ -137,13 +137,13 @@ func (opp *MintProcessor) Process(
 
 	g := state.NewStateKeyGenerator(fact.Contract())
 
-	sts := make([]base.StateMergeValue, 3)
+	var sts []base.StateMergeValue
 
 	v, baseErr, err := calculateCurrencyFee(fact.TokenFact, getStateFunc)
 	if baseErr != nil || err != nil {
 		return nil, baseErr, err
 	}
-	sts[0] = v
+	sts = append(sts, v...)
 
 	st, err := currencystate.ExistsState(g.Design(), "key of design", getStateFunc)
 	if err != nil {
@@ -168,10 +168,10 @@ func (opp *MintProcessor) Process(
 		return nil, ErrInvalid(de, err), nil
 	}
 
-	sts[1] = currencystate.NewStateMergeValue(
+	sts = append(sts, currencystate.NewStateMergeValue(
 		g.Design(),
 		state.NewDesignStateValue(de),
-	)
+	))
 
 	rb := common.ZeroBig
 	switch st, found, err := getStateFunc(g.TokenBalance(fact.Receiver())); {
@@ -185,10 +185,10 @@ func (opp *MintProcessor) Process(
 		rb = b
 	}
 
-	sts[2] = currencystate.NewStateMergeValue(
+	sts = append(sts, currencystate.NewStateMergeValue(
 		g.TokenBalance(fact.Receiver()),
 		state.NewTokenBalanceStateValue(rb.Add(fact.Amount())),
-	)
+	))
 
 	return sts, nil, nil
 }

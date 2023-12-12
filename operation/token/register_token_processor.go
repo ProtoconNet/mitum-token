@@ -138,13 +138,13 @@ func (opp *RegisterTokenProcessor) Process(
 
 	g := state.NewStateKeyGenerator(fact.Contract())
 
-	sts := make([]base.StateMergeValue, 3, 4)
+	var sts []base.StateMergeValue
 
 	v, baseErr, err := calculateCurrencyFee(fact.TokenFact, getStateFunc)
 	if baseErr != nil || err != nil {
 		return nil, baseErr, err
 	}
-	sts[0] = v
+	sts = append(sts, v...)
 
 	policy := types.NewPolicy(fact.InitialSupply(), []types.ApproveBox{})
 	if err := policy.IsValid(nil); err != nil {
@@ -156,10 +156,10 @@ func (opp *RegisterTokenProcessor) Process(
 		return nil, ErrInvalid(design, err), nil
 	}
 
-	sts[1] = currencystate.NewStateMergeValue(
+	sts = append(sts, currencystate.NewStateMergeValue(
 		g.Design(),
 		state.NewDesignStateValue(design),
-	)
+	))
 
 	st, err := currencystate.ExistsState(extstate.StateKeyContractAccount(fact.Contract()), "key of contract account", getStateFunc)
 	if err != nil {
@@ -172,10 +172,10 @@ func (opp *RegisterTokenProcessor) Process(
 	}
 	nca := ca.SetIsActive(true)
 
-	sts[2] = currencystate.NewStateMergeValue(
+	sts = append(sts, currencystate.NewStateMergeValue(
 		extstate.StateKeyContractAccount(fact.Contract()),
 		extstate.NewContractAccountStateValue(nca),
-	)
+	))
 
 	if fact.InitialSupply().OverZero() {
 		sts = append(sts, currencystate.NewStateMergeValue(

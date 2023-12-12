@@ -145,7 +145,7 @@ func (opp *ApproveProcessor) Process(
 	if baseErr != nil || err != nil {
 		return nil, baseErr, err
 	}
-	sts = append(sts, v)
+	sts = append(sts, v...)
 
 	st, _ := currencystate.ExistsState(keyGenerator.Design(), "key of design", getStateFunc)
 	design, _ := state.StateDesignValue(st)
@@ -177,9 +177,10 @@ func (opp *ApproveProcessor) Process(
 		keyGenerator.Design(),
 		state.NewDesignStateValue(de),
 	))
-	if len(sts) != 2 {
-		return nil, ErrBaseOperationProcess(nil, "insufficient state generated"), nil
-	}
+
+	//if len(sts) != 2 {
+	//	return nil, ErrBaseOperationProcess(nil, "insufficient state generated"), nil
+	//}
 
 	return sts, nil, nil
 }

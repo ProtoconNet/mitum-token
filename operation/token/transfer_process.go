@@ -144,13 +144,13 @@ func (opp *TransferProcessor) Process(
 
 	g := state.NewStateKeyGenerator(fact.Contract())
 
-	sts := make([]base.StateMergeValue, 3)
+	var sts []base.StateMergeValue
 
 	v, baseErr, err := calculateCurrencyFee(fact.TokenFact, getStateFunc)
 	if baseErr != nil || err != nil {
 		return nil, baseErr, err
 	}
-	sts[0] = v
+	sts = append(sts, v...)
 
 	st, err := currencystate.ExistsState(g.TokenBalance(fact.Sender()), "key of token balance", getStateFunc)
 	if err != nil {
@@ -162,10 +162,10 @@ func (opp *TransferProcessor) Process(
 		return nil, ErrStateNotFound("token balance value", utils.JoinStringers(fact.Contract(), fact.Sender()), err), nil
 	}
 
-	sts[1] = currencystate.NewStateMergeValue(
+	sts = append(sts, currencystate.NewStateMergeValue(
 		g.TokenBalance(fact.Sender()),
 		state.NewTokenBalanceStateValue(sb.Sub(fact.Amount())),
-	)
+	))
 
 	rb := common.ZeroBig
 	switch st, found, err := getStateFunc(g.TokenBalance(fact.Receiver())); {
@@ -179,10 +179,10 @@ func (opp *TransferProcessor) Process(
 		rb = b
 	}
 
-	sts[2] = currencystate.NewStateMergeValue(
+	sts = append(sts, currencystate.NewStateMergeValue(
 		g.TokenBalance(fact.Receiver()),
 		state.NewTokenBalanceStateValue(rb.Add(fact.Amount())),
-	)
+	))
 
 	return sts, nil, nil
 }
