@@ -143,7 +143,10 @@ func (opp *MintProcessor) Process(
 	if baseErr != nil || err != nil {
 		return nil, baseErr, err
 	}
-	sts = append(sts, v...)
+
+	if len(v) > 0 {
+		sts = append(sts, v...)
+	}
 
 	st, err := currencystate.ExistsState(g.Design(), "key of design", getStateFunc)
 	if err != nil {

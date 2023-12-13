@@ -144,7 +144,9 @@ func (opp *RegisterTokenProcessor) Process(
 	if baseErr != nil || err != nil {
 		return nil, baseErr, err
 	}
-	sts = append(sts, v...)
+	if len(v) > 0 {
+		sts = append(sts, v...)
+	}
 
 	policy := types.NewPolicy(fact.InitialSupply(), []types.ApproveBox{})
 	if err := policy.IsValid(nil); err != nil {
