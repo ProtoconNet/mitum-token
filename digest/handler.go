@@ -2,6 +2,9 @@ package digest
 
 import (
 	"context"
+	isaacnetwork "github.com/ProtoconNet/mitum2/isaac/network"
+	"github.com/ProtoconNet/mitum2/network/quicmemberlist"
+	"github.com/ProtoconNet/mitum2/network/quicstream"
 	"net/http"
 	"time"
 
@@ -41,6 +44,7 @@ type Handlers struct {
 	cache           currencydigest.Cache
 	nodeInfoHandler currencydigest.NodeInfoHandler
 	send            func(interface{}) (base.Operation, error)
+	client          func() (*isaacnetwork.BaseClient, *quicmemberlist.Memberlist, []quicstream.ConnInfo, error)
 	router          *mux.Router
 	routes          map[ /* path */ string]*mux.Route
 	itemsLimiter    func(string /* request type */) int64

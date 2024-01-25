@@ -24,9 +24,6 @@ func (cmd *BurnCommand) Run(pctx context.Context) error { // nolint:dupl
 		return err
 	}
 
-	encs = cmd.Encoders
-	enc = cmd.Encoder
-
 	if err := cmd.parseFlags(); err != nil {
 		return err
 	}
@@ -46,7 +43,7 @@ func (cmd *BurnCommand) parseFlags() error {
 		return err
 	}
 
-	target, err := cmd.Target.Encode(enc)
+	target, err := cmd.Target.Encode(cmd.Encoders.JSON())
 	if err != nil {
 		return errors.Wrapf(err, "invalid target format, %q", cmd.Target.String())
 	}

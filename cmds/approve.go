@@ -24,9 +24,6 @@ func (cmd *ApproveCommand) Run(pctx context.Context) error { // nolint:dupl
 		return err
 	}
 
-	encs = cmd.Encoders
-	enc = cmd.Encoder
-
 	if err := cmd.parseFlags(); err != nil {
 		return err
 	}
@@ -46,7 +43,7 @@ func (cmd *ApproveCommand) parseFlags() error {
 		return err
 	}
 
-	approved, err := cmd.Approved.Encode(enc)
+	approved, err := cmd.Approved.Encode(cmd.Encoders.JSON())
 	if err != nil {
 		return errors.Wrapf(err, "invalid approved format, %q", cmd.Approved.String())
 	}

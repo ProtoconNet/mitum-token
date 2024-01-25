@@ -23,9 +23,6 @@ func (cmd *RegisterTokenCommand) Run(pctx context.Context) error { // nolint:dup
 		return err
 	}
 
-	encs = cmd.Encoders
-	enc = cmd.Encoder
-
 	if err := cmd.parseFlags(); err != nil {
 		return err
 	}

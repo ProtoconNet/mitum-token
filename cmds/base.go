@@ -12,17 +12,16 @@ import (
 	"github.com/ProtoconNet/mitum2/launch"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/encoder"
-	jsonenc "github.com/ProtoconNet/mitum2/util/encoder/json"
 	"github.com/ProtoconNet/mitum2/util/logging"
 	"github.com/ProtoconNet/mitum2/util/ps"
 	"github.com/rs/zerolog"
 )
 
 type BaseCommand struct {
-	Encoder  *jsonenc.Encoder
-	Encoders *encoder.Encoders
-	Log      *zerolog.Logger
-	Out      io.Writer `kong:"-"`
+	Encoder  encoder.Encoder   `kong:"-"`
+	Encoders *encoder.Encoders `kong:"-"`
+	Log      *zerolog.Logger   `kong:"-"`
+	Out      io.Writer         `kong:"-"`
 }
 
 func (cmd *BaseCommand) prepare(pctx context.Context) (context.Context, error) {
@@ -47,10 +46,13 @@ func (cmd *BaseCommand) prepare(pctx context.Context) (context.Context, error) {
 		return pctx, err
 	}
 
-	return pctx, util.LoadFromContextOK(pctx,
-		launch.EncodersContextKey, &cmd.Encoders,
-		launch.EncoderContextKey, &cmd.Encoder,
-	)
+	if err := util.LoadFromContextOK(pctx, launch.EncodersContextKey, &cmd.Encoders); err != nil {
+		return pctx, err
+	}
+
+	cmd.Encoder = cmd.Encoders.JSON()
+
+	return pctx, nil
 }
 
 func (cmd *BaseCommand) print(f string, a ...interface{}) {
@@ -88,13 +90,13 @@ func (cmd *OperationCommand) parseFlags() error {
 		return err
 	}
 
-	sender, err := cmd.Sender.Encode(enc)
+	sender, err := cmd.Sender.Encode(cmd.Encoders.JSON())
 	if err != nil {
 		return errors.Wrapf(err, "invalid sender format, %q", cmd.Sender.String())
 	}
 	cmd.sender = sender
 
-	contract, err := cmd.Contract.Encode(enc)
+	contract, err := cmd.Contract.Encode(cmd.Encoders.JSON())
 	if err != nil {
 		return errors.Wrapf(err, "invalid contract account format, %q", cmd.Contract.String())
 	}

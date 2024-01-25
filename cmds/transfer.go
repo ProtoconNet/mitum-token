@@ -24,9 +24,6 @@ func (cmd *TransferCommand) Run(pctx context.Context) error { // nolint:dupl
 		return err
 	}
 
-	encs = cmd.Encoders
-	enc = cmd.Encoder
-
 	if err := cmd.parseFlags(); err != nil {
 		return err
 	}
@@ -46,7 +43,7 @@ func (cmd *TransferCommand) parseFlags() error {
 		return err
 	}
 
-	receiver, err := cmd.Receiver.Encode(enc)
+	receiver, err := cmd.Receiver.Encode(cmd.Encoders.JSON())
 	if err != nil {
 		return errors.Wrapf(err, "invalid receiver format, %q", cmd.Receiver.String())
 	}
