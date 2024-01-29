@@ -2,11 +2,11 @@ package types
 
 import (
 	"encoding/json"
+	"github.com/ProtoconNet/mitum2/util/encoder"
 
 	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum-token/utils"
 	"github.com/ProtoconNet/mitum2/util"
-	jsonenc "github.com/ProtoconNet/mitum2/util/encoder/json"
 	"github.com/ProtoconNet/mitum2/util/hint"
 )
 
@@ -33,7 +33,7 @@ type DesignJSONUnmarshaler struct {
 	Policy json.RawMessage `json:"policy"`
 }
 
-func (d *Design) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
+func (d *Design) DecodeJSON(b []byte, enc encoder.Encoder) error {
 	e := util.StringError(utils.ErrStringDecodeJSON(*d))
 
 	var u DesignJSONUnmarshaler

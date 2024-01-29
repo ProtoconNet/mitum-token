@@ -5,7 +5,7 @@ import (
 	"github.com/ProtoconNet/mitum-token/utils"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
-	jsonenc "github.com/ProtoconNet/mitum2/util/encoder/json"
+	"github.com/ProtoconNet/mitum2/util/encoder"
 )
 
 type TransferFromFactJSONMarshaler struct {
@@ -30,7 +30,7 @@ type TransferFromFactJSONUnMarshaler struct {
 	Amount   string `json:"amount"`
 }
 
-func (fact *TransferFromFact) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
+func (fact *TransferFromFact) DecodeJSON(b []byte, enc encoder.Encoder) error {
 	e := util.StringError(utils.ErrStringDecodeJSON(*fact))
 
 	if err := fact.TokenFact.DecodeJSON(b, enc); err != nil {

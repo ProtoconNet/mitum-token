@@ -4,7 +4,7 @@ import (
 	"github.com/ProtoconNet/mitum-currency/v3/common"
 	"github.com/ProtoconNet/mitum-token/utils"
 	"github.com/ProtoconNet/mitum2/util"
-	jsonenc "github.com/ProtoconNet/mitum2/util/encoder/json"
+	"github.com/ProtoconNet/mitum2/util/encoder"
 	"github.com/ProtoconNet/mitum2/util/hint"
 )
 
@@ -24,7 +24,7 @@ type TokenBalanceStateValueJSONUnmarshaler struct {
 	Amount string `json:"amount"`
 }
 
-func (s *TokenBalanceStateValue) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
+func (s *TokenBalanceStateValue) DecodeJSON(b []byte, enc encoder.Encoder) error {
 	e := util.StringError(utils.ErrStringDecodeJSON(*s))
 
 	var u TokenBalanceStateValueJSONUnmarshaler

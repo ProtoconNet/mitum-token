@@ -4,7 +4,7 @@ import (
 	"github.com/ProtoconNet/mitum-token/utils"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
-	jsonenc "github.com/ProtoconNet/mitum2/util/encoder/json"
+	"github.com/ProtoconNet/mitum2/util/encoder"
 	"github.com/ProtoconNet/mitum2/util/hint"
 )
 
@@ -28,7 +28,7 @@ type ApproveInfoJSONUnmarshaler struct {
 	Amount  string    `json:"amount"`
 }
 
-func (a *ApproveInfo) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
+func (a *ApproveInfo) DecodeJSON(b []byte, enc encoder.Encoder) error {
 	e := util.StringError(utils.ErrStringDecodeJSON(*a))
 
 	var u ApproveInfoJSONUnmarshaler

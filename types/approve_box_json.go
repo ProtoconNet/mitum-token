@@ -5,7 +5,7 @@ import (
 	"github.com/ProtoconNet/mitum-token/utils"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
-	jsonenc "github.com/ProtoconNet/mitum2/util/encoder/json"
+	"github.com/ProtoconNet/mitum2/util/encoder"
 	"github.com/ProtoconNet/mitum2/util/hint"
 )
 
@@ -29,7 +29,7 @@ type ApproveBoxJSONUnmarshaler struct {
 	Approved json.RawMessage `json:"approved"`
 }
 
-func (a *ApproveBox) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
+func (a *ApproveBox) DecodeJSON(b []byte, enc encoder.Encoder) error {
 	e := util.StringError(utils.ErrStringDecodeJSON(*a))
 
 	var u ApproveBoxJSONUnmarshaler
