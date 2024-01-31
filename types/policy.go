@@ -95,20 +95,20 @@ func (p Policy) GetApproveBox(acc base.Address) *ApproveBox {
 	return &approvedBox
 }
 
-func (p *Policy) MergeApproveBox(apb ApproveBox) {
+func (p *Policy) MergeApproveBox(napb ApproveBox) {
 	var approvedList = make([]ApproveBox, len(p.approveList))
 	copy(approvedList, p.approveList)
 	idx := -1
 	for i, apb := range approvedList {
-		if apb.Account().Equal(apb.Account()) {
+		if apb.Account().Equal(napb.Account()) {
 			idx = i
 			break
 		}
 	}
 	if -1 < idx {
-		approvedList[idx] = apb
+		approvedList[idx] = napb
 	} else {
-		approvedList = append(approvedList, apb)
+		approvedList = append(approvedList, napb)
 	}
 	p.approveList = approvedList
 }
