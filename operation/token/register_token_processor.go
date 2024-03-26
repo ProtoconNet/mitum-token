@@ -73,7 +73,7 @@ func (opp *RegisterTokenProcessor) PreProcess(
 	}
 
 	if err := fact.IsValid(nil); err != nil {
-		return ctx, nil, e.Wrap(err)
+		return ctx, ErrBaseOperationProcess(err, "invalid RegisterTokenFact"), nil
 	}
 
 	if err := currencystate.CheckExistsState(currency.StateKeyAccount(fact.Sender()), getStateFunc); err != nil {

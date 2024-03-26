@@ -3,8 +3,8 @@ module github.com/ProtoconNet/mitum-token
 go 1.21
 
 require (
-	github.com/ProtoconNet/mitum-currency/v3 v3.0.0-alpha.0.20240311015208-04f46a341f7a
-	github.com/ProtoconNet/mitum2 v0.0.0-20240304003123-6f2bcc584965
+	github.com/ProtoconNet/mitum-currency/v3 v3.0.0-alpha.0.20240325053205-07d934ffa517
+	github.com/ProtoconNet/mitum2 v0.0.0-20240314235709-96ca7f16c4a7
 	github.com/alecthomas/kong v0.8.1
 	github.com/arl/statsviz v0.6.0
 	github.com/gorilla/mux v1.8.1

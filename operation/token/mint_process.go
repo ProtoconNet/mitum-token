@@ -74,7 +74,7 @@ func (opp *MintProcessor) PreProcess(
 	}
 
 	if err := fact.IsValid(nil); err != nil {
-		return ctx, nil, e.Wrap(err)
+		return ctx, ErrBaseOperationProcess(err, "invalid MintFact"), nil
 	}
 
 	if err := currencystate.CheckExistsState(currency.StateKeyAccount(fact.Sender()), getStateFunc); err != nil {
