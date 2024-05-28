@@ -4,7 +4,6 @@ import (
 	"github.com/ProtoconNet/mitum-currency/v3/common"
 	currencytypes "github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum-token/types"
-	"github.com/ProtoconNet/mitum-token/utils"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
@@ -45,22 +44,20 @@ func NewRegisterTokenFact(
 }
 
 func (fact RegisterTokenFact) IsValid(b []byte) error {
-	e := util.ErrInvalid.Errorf(utils.ErrStringInvalid(fact))
-
 	if err := util.CheckIsValiders(nil, false, fact.TokenFact, fact.symbol); err != nil {
-		return e.Wrap(err)
+		return common.ErrFactInvalid.Wrap(err)
 	}
 
 	if fact.name == "" {
-		return e.Wrap(errors.Errorf("empty symbol"))
+		return common.ErrFactInvalid.Wrap(common.ErrValueInvalid.Wrap(errors.Errorf("empty symbol")))
 	}
 
 	if !fact.initialSupply.OverNil() {
-		return e.Wrap(errors.Errorf("nil big"))
+		return common.ErrFactInvalid.Wrap(common.ErrValOOR.Wrap(errors.Errorf("zero initial supply")))
 	}
 
 	if err := common.IsValidOperationFact(fact, b); err != nil {
-		return err
+		return common.ErrFactInvalid.Wrap(err)
 	}
 	return nil
 }

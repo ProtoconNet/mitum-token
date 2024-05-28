@@ -2,7 +2,6 @@ package token
 
 import (
 	"github.com/ProtoconNet/mitum-currency/v3/common"
-	"github.com/ProtoconNet/mitum-token/utils"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/encoder"
@@ -28,19 +27,18 @@ type ApproveFactJSONUnMarshaler struct {
 }
 
 func (fact *ApproveFact) DecodeJSON(b []byte, enc encoder.Encoder) error {
-	e := util.StringError(utils.ErrStringDecodeJSON(*fact))
-
 	if err := fact.TokenFact.DecodeJSON(b, enc); err != nil {
-		return e.Wrap(err)
+		return common.DecorateError(err, common.ErrDecodeJson, *fact)
 	}
 
 	var uf ApproveFactJSONUnMarshaler
 	if err := enc.Unmarshal(b, &uf); err != nil {
-		return e.Wrap(err)
+		return common.DecorateError(err, common.ErrDecodeJson, *fact)
 	}
 
-	return fact.unpack(enc,
-		uf.Approved,
-		uf.Amount,
-	)
+	if err := fact.unpack(enc, uf.Approved, uf.Amount); err != nil {
+		return common.DecorateError(err, common.ErrDecodeJson, *fact)
+	}
+
+	return nil
 }

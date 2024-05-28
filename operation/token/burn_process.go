@@ -11,7 +11,6 @@ import (
 
 	currencystate "github.com/ProtoconNet/mitum-currency/v3/state"
 	"github.com/ProtoconNet/mitum-currency/v3/state/currency"
-	extstate "github.com/ProtoconNet/mitum-currency/v3/state/extension"
 	currencytypes "github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum-token/state"
 	"github.com/ProtoconNet/mitum2/base"
@@ -66,28 +65,45 @@ func NewBurnProcessor() currencytypes.GetNewProcessor {
 func (opp *BurnProcessor) PreProcess(
 	ctx context.Context, op base.Operation, getStateFunc base.GetStateFunc,
 ) (context.Context, base.OperationProcessReasonError, error) {
-	e := util.StringError(ErrStringPreProcess(*opp))
-
 	fact, ok := op.Fact().(BurnFact)
 	if !ok {
-		return ctx, nil, e.Wrap(errors.Errorf(utils.ErrStringTypeCast(BurnFact{}, op.Fact())))
+		return ctx, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.
+				Wrap(common.ErrMTypeMismatch).
+				Errorf("expected %T, not %T", BurnFact{}, op.Fact())), nil
 	}
 
 	if err := fact.IsValid(nil); err != nil {
-		return ctx, ErrBaseOperationProcess(err, "invalid BurnFact"), nil
+		return ctx, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.
+				Errorf("%v", err)), nil
 	}
 
-	if err := currencystate.CheckExistsState(currency.StateKeyAccount(fact.Sender()), getStateFunc); err != nil {
-		return nil, ErrBaseOperationProcess(err, "sender not found, %s", fact.Sender().String()), nil
-	}
-
-	if err := currencystate.CheckNotExistsState(extstate.StateKeyContractAccount(fact.Sender()), getStateFunc); err != nil {
-		return nil, ErrBaseOperationProcess(err, "contract account cannot burn token, %s", fact.Sender().String()), nil
-	}
-
-	st, err := currencystate.ExistsState(extstate.StateKeyContractAccount(fact.Contract()), "key of contract account", getStateFunc)
+	_, err := currencystate.ExistsCurrencyPolicy(fact.Currency(), getStateFunc)
 	if err != nil {
-		return nil, ErrBaseOperationProcess(err, "contract not found, %s", fact.Contract().String()), nil
+		return nil, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.Wrap(common.ErrMCurrencyNF).Errorf("%v: %v", fact.Currency(), err)), nil
+	}
+
+	if _, _, aErr, cErr := currencystate.ExistsCAccount(fact.Sender(), "sender", true, false, getStateFunc); aErr != nil {
+		return ctx, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.
+				Errorf("%v", aErr)), nil
+	} else if cErr != nil {
+		return ctx, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.Wrap(common.ErrMCAccountNA).
+				Errorf("%v: sender account is contract account, %v", fact.Sender(), cErr)), nil
+	}
+
+	_, _, aErr, cErr := currencystate.ExistsCAccount(fact.Contract(), "contract", true, true, getStateFunc)
+	if aErr != nil {
+		return ctx, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.
+				Errorf("%v", aErr)), nil
+	} else if cErr != nil {
+		return ctx, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.
+				Errorf("%v", cErr)), nil
 	}
 
 	if !fact.Sender().Equal(fact.Target()) {
@@ -102,35 +118,50 @@ func (opp *BurnProcessor) PreProcess(
 		return nil, ErrBaseOperationProcess(err, "target not found, %s", fact.Target().String()), nil
 	}
 
-	if err := currencystate.CheckNotExistsState(extstate.StateKeyContractAccount(fact.Target()), getStateFunc); err != nil {
-		return nil, ErrBaseOperationProcess(err, "burning tokens of contract accounts is impossible, %s", fact.Target().String()), nil
+	if _, _, aErr, cErr := currencystate.ExistsCAccount(fact.Sender(), "target", true, false, getStateFunc); aErr != nil {
+		return ctx, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.
+				Errorf("%v", aErr)), nil
+	} else if cErr != nil {
+		return ctx, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.Wrap(common.ErrMCAccountNA).
+				Errorf("%v: target account is contract account, %v", cErr, fact.Target())), nil
 	}
 
 	g := state.NewStateKeyGenerator(fact.Contract())
 
 	if err := currencystate.CheckExistsState(g.Design(), getStateFunc); err != nil {
-		return nil, ErrBaseOperationProcess(err, "token design not found, %s", fact.Contract().String()), nil
+		return nil, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.Wrap(common.ErrMServiceNF).
+				Errorf("token design, %s: %v", fact.Contract(), err)), nil
 	}
 
-	st, err = currencystate.ExistsState(g.TokenBalance(fact.Target()), "key of token balance", getStateFunc)
+	st, err := currencystate.ExistsState(g.TokenBalance(fact.Target()), "token balance", getStateFunc)
 	if err != nil {
-		return nil, ErrBaseOperationProcess(err, "token balance not found, %s, %s", fact.Contract(), fact.Target()), nil
+		return nil, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.Wrap(common.ErrMStateNF).
+				Errorf("token balance, %s, %s", fact.Contract(), fact.Target())), nil
 	}
 
 	tb, err := state.StateTokenBalanceValue(st)
 	if err != nil {
-		return nil, ErrBaseOperationProcess(err, "token balance value not found, %s, %s", fact.Contract(), fact.Target()), nil
+		return nil, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.Wrap(common.ErrMStateValInvalid).
+				Errorf("token balance, %s, %s", fact.Contract(), fact.Target())), nil
 	}
 
 	if tb.Compare(fact.Amount()) < 0 {
-		return nil, ErrBaseOperationProcess(err,
-			"token balance is less than amount to burn, %s < %s, %s, %s",
-			tb, fact.Amount(), fact.Contract(), fact.Target(),
-		), nil
+		return nil, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.Wrap(common.ErrMValueInvalid).
+				Errorf("token balance is less than amount to burn, %s < %s, %s, %s",
+					tb, fact.Amount(), fact.Contract(), fact.Target())), nil
 	}
 
 	if err := currencystate.CheckFactSignsByState(fact.Sender(), op.Signs(), getStateFunc); err != nil {
-		return ctx, ErrBaseOperationProcess(err, "invalid signing", ""), nil
+		return ctx, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.
+				Wrap(common.ErrMSignInvalid).
+				Errorf("%v", err)), nil
 	}
 
 	return ctx, nil, nil

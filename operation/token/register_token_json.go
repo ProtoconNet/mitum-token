@@ -3,7 +3,6 @@ package token
 import (
 	"github.com/ProtoconNet/mitum-currency/v3/common"
 	"github.com/ProtoconNet/mitum-token/types"
-	"github.com/ProtoconNet/mitum-token/utils"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/encoder"
 )
@@ -31,20 +30,18 @@ type RegisterTokenFactJSONUnMarshaler struct {
 }
 
 func (fact *RegisterTokenFact) DecodeJSON(b []byte, enc encoder.Encoder) error {
-	e := util.StringError(utils.ErrStringDecodeJSON(*fact))
-
 	if err := fact.TokenFact.DecodeJSON(b, enc); err != nil {
-		return e.Wrap(err)
+		return common.DecorateError(err, common.ErrDecodeJson, *fact)
 	}
 
 	var uf RegisterTokenFactJSONUnMarshaler
 	if err := enc.Unmarshal(b, &uf); err != nil {
-		return e.Wrap(err)
+		return common.DecorateError(err, common.ErrDecodeJson, *fact)
 	}
 
-	return fact.unpack(enc,
-		uf.Symbol,
-		uf.Name,
-		uf.InitialSupply,
-	)
+	if err := fact.unpack(enc, uf.Symbol, uf.Name, uf.InitialSupply); err != nil {
+		return common.DecorateError(err, common.ErrDecodeJson, *fact)
+	}
+
+	return nil
 }

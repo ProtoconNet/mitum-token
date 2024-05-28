@@ -5,7 +5,6 @@ import (
 	"github.com/ProtoconNet/mitum-currency/v3/state"
 	currencystate "github.com/ProtoconNet/mitum-currency/v3/state/currency"
 	"github.com/ProtoconNet/mitum-currency/v3/types"
-	"github.com/ProtoconNet/mitum-token/utils"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/pkg/errors"
@@ -32,19 +31,17 @@ func NewTokenFact(
 }
 
 func (fact TokenFact) IsValid([]byte) error {
-	e := util.ErrInvalid.Errorf(utils.ErrStringInvalid(fact))
-
 	if err := util.CheckIsValiders(nil, false,
 		fact.BaseFact,
 		fact.sender,
 		fact.contract,
 		fact.currency,
 	); err != nil {
-		return e.Wrap(err)
+		return err
 	}
 
 	if fact.sender.Equal(fact.contract) {
-		return e.Wrap(errors.Errorf("contract address is same with sender, %s", fact.sender))
+		return common.ErrSelfTarget.Wrap(errors.Errorf("contract address is same with sender, %s", fact.sender))
 	}
 
 	return nil
@@ -74,18 +71,6 @@ func (fact TokenFact) Currency() types.CurrencyID {
 func (fact TokenFact) Addresses() []base.Address {
 	return []base.Address{fact.sender, fact.contract}
 }
-
-//type TokenOperation struct {
-//	common.BaseOperation
-//}
-//
-//func NewTokenOperation(ht hint.Hint, fact base.Fact) TokenOperation {
-//	return TokenOperation{BaseOperation: common.NewBaseOperation(ht, fact)}
-//}
-//
-//func (op *TokenOperation) HashSign(priv base.Privatekey, networkID base.NetworkID) error {
-//	return op.Sign(priv, networkID)
-//}
 
 func calculateCurrencyFee(fact TokenFact, getStateFunc base.GetStateFunc) (
 	[]base.StateMergeValue, base.OperationProcessReasonError, error,

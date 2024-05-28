@@ -3,7 +3,6 @@ package token
 import (
 	"github.com/ProtoconNet/mitum-currency/v3/common"
 	currencytypes "github.com/ProtoconNet/mitum-currency/v3/types"
-	"github.com/ProtoconNet/mitum-token/utils"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
@@ -41,14 +40,12 @@ func NewTransferFact(
 }
 
 func (fact TransferFact) IsValid(b []byte) error {
-	e := util.ErrInvalid.Errorf(utils.ErrStringInvalid(fact))
-
 	if err := fact.TokenFact.IsValid(nil); err != nil {
-		return e.Wrap(err)
+		return common.ErrFactInvalid.Wrap(err)
 	}
 
 	if err := fact.receiver.IsValid(nil); err != nil {
-		return e.Wrap(err)
+		return common.ErrFactInvalid.Wrap(err)
 	}
 
 	if fact.sender.Equal(fact.receiver) {
@@ -56,15 +53,15 @@ func (fact TransferFact) IsValid(b []byte) error {
 	}
 
 	if fact.contract.Equal(fact.receiver) {
-		return e.Wrap(errors.Errorf("contract address is same with receiver, %s", fact.receiver))
+		return common.ErrFactInvalid.Wrap(common.ErrSelfTarget.Wrap(errors.Errorf("contract address is same with receiver, %s", fact.receiver)))
 	}
 
 	if !fact.amount.OverZero() {
-		return e.Wrap(errors.Errorf("zero amount"))
+		return common.ErrFactInvalid.Wrap(common.ErrValOOR.Wrap(errors.Errorf("zero amount")))
 	}
 
 	if err := common.IsValidOperationFact(fact, b); err != nil {
-		return err
+		return common.ErrFactInvalid.Wrap(err)
 	}
 	return nil
 }

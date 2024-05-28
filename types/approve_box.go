@@ -1,6 +1,7 @@
 package types
 
 import (
+	"github.com/ProtoconNet/mitum-currency/v3/common"
 	"github.com/ProtoconNet/mitum-token/utils"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
@@ -38,7 +39,7 @@ func (a ApproveBox) IsValid([]byte) error {
 	for i := range a.approved {
 		_, found := founds[a.approved[i].Account().String()]
 		if found {
-			return e.Wrap(errors.Errorf(utils.ErrStringDuplicate("approved", a.approved[i].Account().String())))
+			return e.Wrap(common.ErrDupVal.Wrap(errors.Errorf("approved, %v", a.approved[i].Account())))
 		} else {
 			founds[a.approved[i].Account().String()] = struct{}{}
 		}

@@ -42,7 +42,7 @@ func (p Policy) IsValid([]byte) error {
 		}
 
 		if _, ok := founds[a.account.String()]; ok {
-			return e.Wrap(errors.Errorf(utils.ErrStringDuplicate("account", a.account.String())))
+			return e.Wrap(common.ErrDupVal.Wrap(errors.Errorf("account, %v", a.account.String())))
 		}
 
 		founds[a.account.String()] = struct{}{}

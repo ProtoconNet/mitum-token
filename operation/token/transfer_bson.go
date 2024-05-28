@@ -1,11 +1,10 @@
 package token
 
 import (
+	"github.com/ProtoconNet/mitum-currency/v3/common"
 	"go.mongodb.org/mongo-driver/bson"
 
 	bsonenc "github.com/ProtoconNet/mitum-currency/v3/digest/util/bson"
-	"github.com/ProtoconNet/mitum-token/utils"
-	"github.com/ProtoconNet/mitum2/util"
 )
 
 func (fact TransferFact) MarshalBSON() ([]byte, error) {
@@ -23,19 +22,18 @@ type TransferFactBSONUnmarshaler struct {
 }
 
 func (fact *TransferFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError(utils.ErrStringDecodeBSON(*fact))
-
 	if err := fact.TokenFact.DecodeBSON(b, enc); err != nil {
-		return e.Wrap(err)
+		return common.DecorateError(err, common.ErrDecodeBson, *fact)
 	}
 
 	var uf TransferFactBSONUnmarshaler
 	if err := bson.Unmarshal(b, &uf); err != nil {
-		return e.Wrap(err)
+		return common.DecorateError(err, common.ErrDecodeBson, *fact)
 	}
 
-	return fact.unpack(enc,
-		uf.Receiver,
-		uf.Amount,
-	)
+	if err := fact.unpack(enc, uf.Receiver, uf.Amount); err != nil {
+		return common.DecorateError(err, common.ErrDecodeBson, *fact)
+	}
+
+	return nil
 }

@@ -10,15 +10,15 @@ func ErrStringInvalid(t any) string {
 }
 
 func ErrStringDecodeBSON(t any) string {
-	return fmt.Sprintf("failed to decode bson of %T", t)
+	return fmt.Sprintf("decode bson of %T", t)
 }
 
 func ErrStringDecodeJSON(t any) string {
-	return fmt.Sprintf("failed to decode json of %T", t)
+	return fmt.Sprintf("decode json of %T", t)
 }
 
 func ErrStringUnPack(t any) string {
-	return fmt.Sprintf("failed to unpack %T", t)
+	return fmt.Sprintf("unpack %T", t)
 }
 
 func ErrStringTypeCast(expected any, received any) string {
@@ -36,9 +36,10 @@ func ErrStringWrap(s string, e error) string {
 	return s
 }
 
-func ErrStringDuplicate(name, k string) string {
-	return fmt.Sprintf("duplicate %s found, %s", name, k)
-}
+//
+//func ErrStringDuplicate(name, k string) string {
+//	return fmt.Sprintf("duplicate %s found, %s", name, k)
+//}
 
 func JoinStringers(s ...fmt.Stringer) string {
 	ss := make([]string, len(s))

@@ -11,7 +11,6 @@ import (
 	"github.com/ProtoconNet/mitum-currency/v3/common"
 	currencystate "github.com/ProtoconNet/mitum-currency/v3/state"
 	"github.com/ProtoconNet/mitum-currency/v3/state/currency"
-	extstate "github.com/ProtoconNet/mitum-currency/v3/state/extension"
 	currencytypes "github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum-token/state"
 	"github.com/ProtoconNet/mitum2/base"
@@ -66,59 +65,83 @@ func NewTransferFromProcessor() currencytypes.GetNewProcessor {
 func (opp *TransferFromProcessor) PreProcess(
 	ctx context.Context, op base.Operation, getStateFunc base.GetStateFunc,
 ) (context.Context, base.OperationProcessReasonError, error) {
-	e := util.StringError(ErrStringPreProcess(*opp))
-
 	fact, ok := op.Fact().(TransferFromFact)
 	if !ok {
-		return ctx, nil, e.Wrap(errors.Errorf(utils.ErrStringTypeCast(TransferFromFact{}, op.Fact())))
+		return ctx, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.
+				Wrap(common.ErrMTypeMismatch).
+				Errorf("expected %T, not %T", TransferFromFact{}, op.Fact())), nil
 	}
 
 	if err := fact.IsValid(nil); err != nil {
-		return ctx, ErrBaseOperationProcess(err, "invalid TransferFromFact"), nil
+		return ctx, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.
+				Errorf("%v", err)), nil
 	}
 
-	if err := currencystate.CheckExistsState(currency.StateKeyAccount(fact.Sender()), getStateFunc); err != nil {
-		return nil, ErrStateNotFound("sender", fact.Sender().String(), err), nil
+	_, err := currencystate.ExistsCurrencyPolicy(fact.Currency(), getStateFunc)
+	if err != nil {
+		return nil, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.Wrap(common.ErrMCurrencyNF).Errorf("%v: %v", fact.Currency(), err)), nil
 	}
 
-	if err := currencystate.CheckNotExistsState(extstate.StateKeyContractAccount(fact.Sender()), getStateFunc); err != nil {
-		return nil, ErrBaseOperationProcess(err, "contract account cannot transfer token as approved, %s", fact.Sender().String()), nil
+	if _, _, aErr, cErr := currencystate.ExistsCAccount(fact.Sender(), "sender", true, false, getStateFunc); aErr != nil {
+		return ctx, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.
+				Errorf("%v", aErr)), nil
+	} else if cErr != nil {
+		return ctx, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.Wrap(common.ErrMCAccountNA).
+				Errorf("%v: sender account is contract account, %v", fact.Sender(), cErr)), nil
 	}
 
-	if err := currencystate.CheckExistsState(extstate.StateKeyContractAccount(fact.Contract()), getStateFunc); err != nil {
-		return nil, ErrBaseOperationProcess(err, "contract not found, %s", fact.Contract().String()), nil
+	_, _, aErr, cErr := currencystate.ExistsCAccount(fact.Contract(), "contract", true, true, getStateFunc)
+	if aErr != nil {
+		return ctx, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.
+				Errorf("%v", aErr)), nil
+	} else if cErr != nil {
+		return ctx, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.
+				Errorf("%v", cErr)), nil
 	}
 
-	if err := currencystate.CheckExistsState(currency.StateKeyCurrencyDesign(fact.Currency()), getStateFunc); err != nil {
-		return nil, ErrStateNotFound("currency", fact.Currency().String(), err), nil
+	if _, _, aErr, cErr := currencystate.ExistsCAccount(fact.Receiver(), "receiver", true, false, getStateFunc); aErr != nil {
+		return ctx, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.
+				Errorf("%v", aErr)), nil
+	} else if cErr != nil {
+		return ctx, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.Wrap(common.ErrMCAccountNA).
+				Errorf("%v: receiver account is contract account, %v", fact.Receiver(), cErr)), nil
 	}
 
-	//if err := currencystate.CheckExistsState(currency.StateKeyAccount(fact.Receiver()), getStateFunc); err != nil {
-	//	return nil, ErrStateNotFound("receiver", fact.Receiver().String(), err), nil
-	//}
-
-	if err := currencystate.CheckNotExistsState(extstate.StateKeyContractAccount(fact.Receiver()), getStateFunc); err != nil {
-		return nil, ErrBaseOperationProcess(err, "contract account cannot receive tokens, %s", fact.Receiver().String()), nil
-	}
-
-	if err := currencystate.CheckExistsState(currency.StateKeyAccount(fact.Target()), getStateFunc); err != nil {
-		return nil, ErrStateNotFound("target", fact.Target().String(), err), nil
-	}
-
-	if err := currencystate.CheckNotExistsState(extstate.StateKeyContractAccount(fact.Target()), getStateFunc); err != nil {
-		return nil, ErrBaseOperationProcess(err, "contract account cannot be target of transfer-from, %s", fact.Receiver().String()), nil
+	if _, _, aErr, cErr := currencystate.ExistsCAccount(fact.Target(), "target", true, false, getStateFunc); aErr != nil {
+		return ctx, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.
+				Errorf("%v", aErr)), nil
+	} else if cErr != nil {
+		return ctx, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.Wrap(common.ErrMCAccountNA).
+				Errorf("%v: target account is contract account, %v", fact.Target(), cErr)), nil
 	}
 
 	g := state.NewStateKeyGenerator(fact.Contract())
 
-	st, err := currencystate.ExistsState(g.Design(), "key of design", getStateFunc)
+	st, err := currencystate.ExistsState(g.Design(), "design", getStateFunc)
 	if err != nil {
-		return nil, ErrStateNotFound("token design", fact.Contract().String(), err), nil
+		return nil, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.
+				Wrap(common.ErrMServiceNF).Errorf("token design, %v",
+				fact.Contract(),
+			)), nil
 	}
 
 	design, err := state.StateDesignValue(st)
 	if err != nil {
-		return nil, ErrStateNotFound("token design value", fact.Contract().String(), err), nil
+		return nil, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.Wrap(common.ErrMStateValInvalid).
+				Errorf("token design, %s, %s", fact.Contract(), fact.Target())), nil
 	}
 
 	approveBoxList := design.Policy().ApproveList()
@@ -132,50 +155,53 @@ func (opp *TransferFromProcessor) PreProcess(
 	}
 
 	if idx < 0 {
-		return nil, ErrBaseOperationProcess(
-			err,
-			"sender has not approved %s, %s",
-			fact.Contract(), fact.Sender(),
-		), nil
+		return nil, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.
+				Errorf("sender has not approved %s, %s",
+					fact.Contract(), fact.Sender())), nil
 	}
 
 	aprInfo := approveBoxList[idx].GetApproveInfo(fact.Sender())
 	if aprInfo == nil {
-		return nil, ErrBaseOperationProcess(
-			err,
-			"sender is not approved account of target, %s, %s, %s",
-			fact.Contract(), fact.Sender(), fact.Target(),
-		), nil
+		return nil, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.
+				Errorf("sender is not approved account of target, %v, %v, %v: %v",
+					fact.Contract(), fact.Sender(), fact.Target(), err)), nil
 	}
 
 	if aprInfo.Amount().Compare(fact.Amount()) < 0 {
-		return nil, ErrBaseOperationProcess(
-			err,
-			"approved amount is less than amount to transfer, %s < %s, %s, %s, %s",
-			aprInfo.Amount(), fact.Amount(), fact.Contract(), fact.Sender(), fact.Target(),
-		), nil
+		return nil, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.
+				Errorf("approved amount is less than amount to transfer, %v < %v, %v, %v, %v:%v",
+					aprInfo.Amount(), fact.Amount(), fact.Contract(), fact.Sender(), fact.Target(), err)), nil
 	}
 
-	st, err = currencystate.ExistsState(g.TokenBalance(fact.Target()), "key of token balance", getStateFunc)
+	st, err = currencystate.ExistsState(g.TokenBalance(fact.Target()), "token balance", getStateFunc)
 	if err != nil {
-		return nil, ErrStateNotFound("token balance", utils.JoinStringers(fact.Contract(), fact.Target()), err), nil
+		return nil, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.Wrap(common.ErrMStateNF).
+				Errorf("token balance, %s, %s", fact.Contract(), fact.Target())), nil
 	}
 
 	tb, err := state.StateTokenBalanceValue(st)
 	if err != nil {
-		return nil, ErrStateNotFound("token balance value", utils.JoinStringers(fact.Contract(), fact.Target()), err), nil
+		return nil, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.Wrap(common.ErrMStateValInvalid).
+				Errorf("token balance, %s, %s", fact.Contract(), fact.Target())), nil
 	}
 
 	if tb.Compare(fact.Amount()) < 0 {
-		return nil, ErrBaseOperationProcess(
-			err,
-			"token balance is less than amount to transfer, %s < %s, %s, %s",
-			tb, fact.Amount(), fact.Contract(), fact.Target(),
-		), nil
+		return nil, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.Wrap(common.ErrMValueInvalid).
+				Errorf("token balance is less than amount to transferfrom, %s < %s, %s, %s",
+					tb, fact.Amount(), fact.Contract(), fact.Target())), nil
 	}
 
 	if err := currencystate.CheckFactSignsByState(fact.Sender(), op.Signs(), getStateFunc); err != nil {
-		return ctx, ErrBaseOperationProcess(err, "invalid signing"), nil
+		return ctx, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.
+				Wrap(common.ErrMSignInvalid).
+				Errorf("%v", err)), nil
 	}
 
 	return ctx, nil, nil
