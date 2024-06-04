@@ -5,15 +5,14 @@ import (
 	"github.com/ProtoconNet/mitum-currency/v3/operation/test"
 	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
-	"github.com/ProtoconNet/mitum2/util/encoder"
 )
 
 type TestApproveProcessor struct {
 	*test.BaseTestOperationProcessorNoItem[Approve]
 }
 
-func NewTestApproveProcessor(encs *encoder.Encoders) TestApproveProcessor {
-	t := test.NewBaseTestOperationProcessorNoItem[Approve](encs)
+func NewTestApproveProcessor(tp *test.TestProcessor) TestApproveProcessor {
+	t := test.NewBaseTestOperationProcessorNoItem[Approve](tp)
 	return TestApproveProcessor{BaseTestOperationProcessorNoItem: &t}
 }
 
@@ -73,7 +72,7 @@ func (t *TestApproveProcessor) Print(fileName string,
 }
 
 func (t *TestApproveProcessor) MakeOperation(
-	sender base.Address, privatekey base.Privatekey, contract, approved base.Address, amount common.Big, currency types.CurrencyID,
+	sender base.Address, privatekey base.Privatekey, contract, approved base.Address, amount int64, currency types.CurrencyID,
 ) *TestApproveProcessor {
 	op := NewApprove(
 		NewApproveFact(
@@ -82,7 +81,7 @@ func (t *TestApproveProcessor) MakeOperation(
 			contract,
 			currency,
 			approved,
-			amount,
+			common.NewBig(amount),
 		))
 	_ = op.Sign(privatekey, t.NetworkID)
 	t.Op = op

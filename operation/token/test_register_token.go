@@ -4,16 +4,16 @@ import (
 	"github.com/ProtoconNet/mitum-currency/v3/common"
 	"github.com/ProtoconNet/mitum-currency/v3/operation/test"
 	"github.com/ProtoconNet/mitum-currency/v3/types"
+	tokentypes "github.com/ProtoconNet/mitum-token/types"
 	"github.com/ProtoconNet/mitum2/base"
-	"github.com/ProtoconNet/mitum2/util/encoder"
 )
 
 type TestRegisterTokenProcessor struct {
 	*test.BaseTestOperationProcessorNoItem[RegisterToken]
 }
 
-func NewTestRegisterTokenProcessor(encs *encoder.Encoders) TestRegisterTokenProcessor {
-	t := test.NewBaseTestOperationProcessorNoItem[RegisterToken](encs)
+func NewTestRegisterTokenProcessor(tp *test.TestProcessor) TestRegisterTokenProcessor {
+	t := test.NewBaseTestOperationProcessorNoItem[RegisterToken](tp)
 	return TestRegisterTokenProcessor{BaseTestOperationProcessorNoItem: &t}
 }
 
@@ -73,7 +73,8 @@ func (t *TestRegisterTokenProcessor) Print(fileName string,
 }
 
 func (t *TestRegisterTokenProcessor) MakeOperation(
-	sender base.Address, privatekey base.Privatekey, contract base.Address, symbol, name string, initalSupply common.Big, currency types.CurrencyID,
+	sender base.Address, privatekey base.Privatekey, contract base.Address,
+	symbol, name string, initialSupply int64, currency types.CurrencyID,
 ) *TestRegisterTokenProcessor {
 	op := NewRegisterToken(
 		NewRegisterTokenFact(
@@ -81,9 +82,9 @@ func (t *TestRegisterTokenProcessor) MakeOperation(
 			sender,
 			contract,
 			currency,
-			types.CurrencyID(symbol),
+			tokentypes.TokenID(symbol),
 			name,
-			initalSupply,
+			common.NewBig(initialSupply),
 		))
 	_ = op.Sign(privatekey, t.NetworkID)
 	t.Op = op

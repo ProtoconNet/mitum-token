@@ -5,15 +5,14 @@ import (
 	"github.com/ProtoconNet/mitum-currency/v3/operation/test"
 	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
-	"github.com/ProtoconNet/mitum2/util/encoder"
 )
 
 type TestBurnProcessor struct {
 	*test.BaseTestOperationProcessorNoItem[Burn]
 }
 
-func NewTestBurnProcessor(encs *encoder.Encoders) TestBurnProcessor {
-	t := test.NewBaseTestOperationProcessorNoItem[Burn](encs)
+func NewTestBurnProcessor(tp *test.TestProcessor) TestBurnProcessor {
+	t := test.NewBaseTestOperationProcessorNoItem[Burn](tp)
 	return TestBurnProcessor{BaseTestOperationProcessorNoItem: &t}
 }
 
@@ -73,7 +72,7 @@ func (t *TestBurnProcessor) Print(fileName string,
 }
 
 func (t *TestBurnProcessor) MakeOperation(
-	sender base.Address, privatekey base.Privatekey, contract, target base.Address, amount common.Big, currency types.CurrencyID,
+	sender base.Address, privatekey base.Privatekey, contract, target base.Address, amount int64, currency types.CurrencyID,
 ) *TestBurnProcessor {
 	op := NewBurn(
 		NewBurnFact(
@@ -82,7 +81,7 @@ func (t *TestBurnProcessor) MakeOperation(
 			contract,
 			currency,
 			target,
-			amount,
+			common.NewBig(amount),
 		))
 	_ = op.Sign(privatekey, t.NetworkID)
 	t.Op = op

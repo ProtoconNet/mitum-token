@@ -5,15 +5,14 @@ import (
 	"github.com/ProtoconNet/mitum-currency/v3/operation/test"
 	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
-	"github.com/ProtoconNet/mitum2/util/encoder"
 )
 
 type TestTransferFromProcessor struct {
 	*test.BaseTestOperationProcessorNoItem[TransferFrom]
 }
 
-func NewTestTransferFromProcessor(encs *encoder.Encoders) TestTransferFromProcessor {
-	t := test.NewBaseTestOperationProcessorNoItem[TransferFrom](encs)
+func NewTestTransferFromProcessor(tp *test.TestProcessor) TestTransferFromProcessor {
+	t := test.NewBaseTestOperationProcessorNoItem[TransferFrom](tp)
 	return TestTransferFromProcessor{BaseTestOperationProcessorNoItem: &t}
 }
 
@@ -73,7 +72,7 @@ func (t *TestTransferFromProcessor) Print(fileName string,
 }
 
 func (t *TestTransferFromProcessor) MakeOperation(
-	sender base.Address, privatekey base.Privatekey, contract, receiver, target base.Address, amount common.Big, currency types.CurrencyID,
+	sender base.Address, privatekey base.Privatekey, contract, receiver, target base.Address, amount int64, currency types.CurrencyID,
 ) *TestTransferFromProcessor {
 	op := NewTransferFrom(
 		NewTransferFromFact(
@@ -83,7 +82,7 @@ func (t *TestTransferFromProcessor) MakeOperation(
 			currency,
 			receiver,
 			target,
-			amount,
+			common.NewBig(amount),
 		))
 	_ = op.Sign(privatekey, t.NetworkID)
 	t.Op = op
