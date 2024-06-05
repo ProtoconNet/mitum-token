@@ -13,7 +13,7 @@ func (s TokenBalanceStateValue) MarshalBSON() ([]byte, error) {
 	return bsonenc.Marshal(
 		bson.M{
 			"_hint":  s.Hint().String(),
-			"amount": s.amount,
+			"amount": s.Amount,
 		},
 	)
 }
@@ -42,7 +42,7 @@ func (s *TokenBalanceStateValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) erro
 	if err != nil {
 		return e.Wrap(err)
 	}
-	s.amount = big
+	s.Amount = big
 
 	return nil
 }

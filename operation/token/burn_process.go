@@ -3,6 +3,7 @@ package token
 import (
 	"context"
 	"fmt"
+	"github.com/ProtoconNet/mitum-currency/v3/common"
 	"sync"
 
 	"github.com/ProtoconNet/mitum-token/types"
@@ -192,14 +193,17 @@ func (opp *BurnProcessor) Process(
 		return nil, ErrBaseOperationProcess(err, "token balance not found, %s, %s", fact.Contract(), fact.Target()), nil
 	}
 
-	tb, err := state.StateTokenBalanceValue(st)
+	_, err = state.StateTokenBalanceValue(st)
 	if err != nil {
 		return nil, ErrBaseOperationProcess(err, "token balance value not found, %s, %s", fact.Contract(), fact.Target()), nil
 	}
 
-	sts = append(sts, currencystate.NewStateMergeValue(
+	sts = append(sts, common.NewBaseStateMergeValue(
 		g.TokenBalance(fact.Target()),
-		state.NewTokenBalanceStateValue(tb.Sub(fact.Amount())),
+		state.NewDeductTokenBalanceStateValue(fact.Amount()),
+		func(height base.Height, st base.State) base.StateValueMerger {
+			return state.NewTokenBalanceStateValueMerger(height, g.TokenBalance(fact.Target()), st)
+		},
 	))
 
 	return sts, nil, nil

@@ -16,7 +16,7 @@ type TokenBalanceStateValueJSONMarshaler struct {
 func (s TokenBalanceStateValue) MarshalJSON() ([]byte, error) {
 	return util.MarshalJSON(TokenBalanceStateValueJSONMarshaler{
 		BaseHinter: s.BaseHinter,
-		Amount:     s.amount,
+		Amount:     s.Amount,
 	})
 }
 
@@ -36,7 +36,7 @@ func (s *TokenBalanceStateValue) DecodeJSON(b []byte, enc encoder.Encoder) error
 	if err != nil {
 		return e.Wrap(err)
 	}
-	s.amount = big
+	s.Amount = big
 
 	return nil
 }

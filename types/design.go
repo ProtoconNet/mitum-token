@@ -1,7 +1,6 @@
 package types
 
 import (
-	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum-token/utils"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
@@ -12,12 +11,12 @@ var DesignHint = hint.MustNewHint("mitum-token-design-v0.0.1")
 
 type Design struct {
 	hint.BaseHinter
-	symbol types.CurrencyID
+	symbol TokenID
 	name   string
 	policy Policy
 }
 
-func NewDesign(symbol types.CurrencyID, name string, policy Policy) Design {
+func NewDesign(symbol TokenID, name string, policy Policy) Design {
 	return Design{
 		BaseHinter: hint.NewBaseHinter(DesignHint),
 		symbol:     symbol,
@@ -52,7 +51,7 @@ func (d Design) Bytes() []byte {
 	)
 }
 
-func (d Design) Symbol() types.CurrencyID {
+func (d Design) Symbol() TokenID {
 	return d.symbol
 }
 

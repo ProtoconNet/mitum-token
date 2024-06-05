@@ -51,6 +51,10 @@ func (fact TransferFact) IsValid(b []byte) error {
 		return e.Wrap(err)
 	}
 
+	if fact.sender.Equal(fact.receiver) {
+		return e.Wrap(errors.Errorf("sender address is same with receiver, %s", fact.sender))
+	}
+
 	if fact.contract.Equal(fact.receiver) {
 		return e.Wrap(errors.Errorf("contract address is same with receiver, %s", fact.receiver))
 	}

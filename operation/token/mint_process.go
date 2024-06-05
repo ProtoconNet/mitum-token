@@ -176,21 +176,27 @@ func (opp *MintProcessor) Process(
 		state.NewDesignStateValue(de),
 	))
 
-	rb := common.ZeroBig
-	switch st, found, err := getStateFunc(g.TokenBalance(fact.Receiver())); {
+	k := g.TokenBalance(fact.Receiver())
+	switch st, found, err := getStateFunc(k); {
 	case err != nil:
 		return nil, ErrBaseOperationProcess(err, "failed to check token balance, %s, %s", fact.Contract(), fact.Receiver()), nil
 	case found:
-		b, err := state.StateTokenBalanceValue(st)
+		_, err := state.StateTokenBalanceValue(st)
 		if err != nil {
 			return nil, ErrBaseOperationProcess(err, "failed to get token balance value from state, %s, %s", fact.Contract(), fact.Receiver()), nil
 		}
-		rb = b
 	}
 
-	sts = append(sts, currencystate.NewStateMergeValue(
-		g.TokenBalance(fact.Receiver()),
-		state.NewTokenBalanceStateValue(rb.Add(fact.Amount())),
+	sts = append(sts, common.NewBaseStateMergeValue(
+		k,
+		state.NewAddTokenBalanceStateValue(fact.Amount()),
+		func(height base.Height, st base.State) base.StateValueMerger {
+			return state.NewTokenBalanceStateValueMerger(
+				height,
+				k,
+				st,
+			)
+		},
 	))
 
 	return sts, nil, nil

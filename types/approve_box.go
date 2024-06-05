@@ -97,9 +97,9 @@ func (a *ApproveBox) SetApproveInfo(ap ApproveInfo) {
 	var count int
 	if len(a.approved) < 1 {
 		approved = append(approved, ap)
+		a.approved = approved
 		return
 	}
-
 	for i := range a.approved {
 		if ap.Account().Equal(a.approved[i].Account()) {
 			approved = append(approved, ap)

@@ -3,6 +3,7 @@ package token
 import (
 	"github.com/ProtoconNet/mitum-currency/v3/common"
 	currencytypes "github.com/ProtoconNet/mitum-currency/v3/types"
+	"github.com/ProtoconNet/mitum-token/types"
 	"github.com/ProtoconNet/mitum-token/utils"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
@@ -18,7 +19,7 @@ var (
 
 type RegisterTokenFact struct {
 	TokenFact
-	symbol        currencytypes.CurrencyID
+	symbol        types.TokenID
 	name          string
 	initialSupply common.Big
 }
@@ -27,7 +28,7 @@ func NewRegisterTokenFact(
 	token []byte,
 	sender, contract base.Address,
 	currency currencytypes.CurrencyID,
-	symbol currencytypes.CurrencyID,
+	symbol types.TokenID,
 	name string,
 	initialSupply common.Big,
 ) RegisterTokenFact {
@@ -81,7 +82,7 @@ func (fact RegisterTokenFact) Name() string {
 	return fact.name
 }
 
-func (fact RegisterTokenFact) Symbol() currencytypes.CurrencyID {
+func (fact RegisterTokenFact) Symbol() types.TokenID {
 	return fact.symbol
 }
 

@@ -3,6 +3,7 @@ package token
 import (
 	"context"
 	"fmt"
+	"github.com/ProtoconNet/mitum-currency/v3/common"
 	"sync"
 
 	"github.com/ProtoconNet/mitum-token/types"
@@ -180,9 +181,16 @@ func (opp *RegisterTokenProcessor) Process(
 	))
 
 	if fact.InitialSupply().OverZero() {
-		sts = append(sts, currencystate.NewStateMergeValue(
+		sts = append(sts, common.NewBaseStateMergeValue(
 			g.TokenBalance(fact.Sender()),
-			state.NewTokenBalanceStateValue(fact.InitialSupply()),
+			state.NewAddTokenBalanceStateValue(fact.InitialSupply()),
+			func(height base.Height, st base.State) base.StateValueMerger {
+				return state.NewTokenBalanceStateValueMerger(
+					height,
+					g.TokenBalance(fact.Sender()),
+					st,
+				)
+			},
 		))
 	}
 

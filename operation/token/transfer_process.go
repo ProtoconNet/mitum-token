@@ -159,14 +159,17 @@ func (opp *TransferProcessor) Process(
 		return nil, ErrStateNotFound("token balance", utils.JoinStringers(fact.Contract(), fact.Sender()), err), nil
 	}
 
-	sb, err := state.StateTokenBalanceValue(st)
+	_, err = state.StateTokenBalanceValue(st)
 	if err != nil {
 		return nil, ErrStateNotFound("token balance value", utils.JoinStringers(fact.Contract(), fact.Sender()), err), nil
 	}
 
-	sts = append(sts, currencystate.NewStateMergeValue(
+	sts = append(sts, common.NewBaseStateMergeValue(
 		g.TokenBalance(fact.Sender()),
-		state.NewTokenBalanceStateValue(sb.Sub(fact.Amount())),
+		state.NewDeductTokenBalanceStateValue(fact.Amount()),
+		func(height base.Height, st base.State) base.StateValueMerger {
+			return state.NewTokenBalanceStateValueMerger(height, g.TokenBalance(fact.Sender()), st)
+		},
 	))
 
 	k := currency.StateKeyAccount(fact.Receiver())
@@ -187,21 +190,22 @@ func (opp *TransferProcessor) Process(
 		sts = append(sts, stv)
 	}
 
-	rb := common.ZeroBig
 	switch st, found, err := getStateFunc(g.TokenBalance(fact.Receiver())); {
 	case err != nil:
 		return nil, ErrBaseOperationProcess(err, "failed to check token balance, %s, %s", fact.Contract(), fact.Receiver()), nil
 	case found:
-		b, err := state.StateTokenBalanceValue(st)
+		_, err := state.StateTokenBalanceValue(st)
 		if err != nil {
 			return nil, ErrBaseOperationProcess(err, "failed to get token balance value from state, %s, %s", fact.Contract(), fact.Receiver()), nil
 		}
-		rb = b
 	}
 
-	sts = append(sts, currencystate.NewStateMergeValue(
+	sts = append(sts, common.NewBaseStateMergeValue(
 		g.TokenBalance(fact.Receiver()),
-		state.NewTokenBalanceStateValue(rb.Add(fact.Amount())),
+		state.NewAddTokenBalanceStateValue(fact.Amount()),
+		func(height base.Height, st base.State) base.StateValueMerger {
+			return state.NewTokenBalanceStateValueMerger(height, g.TokenBalance(fact.Receiver()), st)
+		},
 	))
 
 	return sts, nil, nil

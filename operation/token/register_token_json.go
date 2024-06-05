@@ -2,7 +2,7 @@ package token
 
 import (
 	"github.com/ProtoconNet/mitum-currency/v3/common"
-	currencytypes "github.com/ProtoconNet/mitum-currency/v3/types"
+	"github.com/ProtoconNet/mitum-token/types"
 	"github.com/ProtoconNet/mitum-token/utils"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/encoder"
@@ -10,9 +10,9 @@ import (
 
 type RegisterTokenFactJSONMarshaler struct {
 	TokenFactJSONMarshaler
-	Symbol        currencytypes.CurrencyID `json:"symbol"`
-	Name          string                   `json:"name"`
-	InitialSupply common.Big               `json:"initial_supply"`
+	Symbol        types.TokenID `json:"symbol"`
+	Name          string        `json:"name"`
+	InitialSupply common.Big    `json:"initial_supply"`
 }
 
 func (fact RegisterTokenFact) MarshalJSON() ([]byte, error) {
