@@ -12,7 +12,7 @@ func (d *Design) unpack(enc encoder.Encoder, ht hint.Hint, symbol, name string, 
 	e := util.StringError(utils.ErrStringUnPack(*d))
 
 	d.BaseHinter = hint.NewBaseHinter(ht)
-	d.symbol = TokenID(symbol)
+	d.symbol = TokenSymbol(symbol)
 	d.name = name
 
 	if hinter, err := enc.Decode(bp); err != nil {

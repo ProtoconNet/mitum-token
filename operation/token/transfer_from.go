@@ -55,23 +55,23 @@ func (fact TransferFromFact) IsValid(b []byte) error {
 	}
 
 	if fact.contract.Equal(fact.receiver) {
-		return common.ErrFactInvalid.Wrap(common.ErrSelfTarget.Wrap(errors.Errorf("contract address is same with receiver, %s", fact.receiver)))
+		return common.ErrFactInvalid.Wrap(common.ErrSelfTarget.Wrap(errors.Errorf("receiver %v is same with contract account", fact.receiver)))
 	}
 
 	if fact.contract.Equal(fact.target) {
-		return common.ErrFactInvalid.Wrap(common.ErrSelfTarget.Wrap(errors.Errorf("contract address is same with target, %s", fact.target)))
+		return common.ErrFactInvalid.Wrap(common.ErrSelfTarget.Wrap(errors.Errorf("target %v is same with contract account", fact.target)))
 	}
 
 	if fact.receiver.Equal(fact.target) {
-		return common.ErrFactInvalid.Wrap(common.ErrSelfTarget.Wrap(errors.Errorf("target is same with receiver, %s", fact.receiver)))
+		return common.ErrFactInvalid.Wrap(common.ErrSelfTarget.Wrap(errors.Errorf("receiver %v is same with target", fact.receiver)))
 	}
 
 	if fact.sender.Equal(fact.target) {
-		return common.ErrFactInvalid.Wrap(common.ErrSelfTarget.Wrap(errors.Errorf("sender is same with target, %s", fact.target)))
+		return common.ErrFactInvalid.Wrap(common.ErrSelfTarget.Wrap(errors.Errorf("sender %v is same with target", fact.sender)))
 	}
 
 	if !fact.amount.OverZero() {
-		return common.ErrFactInvalid.Wrap(common.ErrValOOR.Wrap(errors.Errorf("zero amount")))
+		return common.ErrFactInvalid.Wrap(common.ErrValOOR.Wrap(errors.Errorf("transfer-from amount must be over zero, got %v", fact.amount)))
 	}
 
 	if err := common.IsValidOperationFact(fact, b); err != nil {

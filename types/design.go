@@ -11,12 +11,12 @@ var DesignHint = hint.MustNewHint("mitum-token-design-v0.0.1")
 
 type Design struct {
 	hint.BaseHinter
-	symbol TokenID
+	symbol TokenSymbol
 	name   string
 	policy Policy
 }
 
-func NewDesign(symbol TokenID, name string, policy Policy) Design {
+func NewDesign(symbol TokenSymbol, name string, policy Policy) Design {
 	return Design{
 		BaseHinter: hint.NewBaseHinter(DesignHint),
 		symbol:     symbol,
@@ -51,7 +51,7 @@ func (d Design) Bytes() []byte {
 	)
 }
 
-func (d Design) Symbol() TokenID {
+func (d Design) Symbol() TokenSymbol {
 	return d.symbol
 }
 

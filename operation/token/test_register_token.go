@@ -82,7 +82,7 @@ func (t *TestRegisterTokenProcessor) MakeOperation(
 			sender,
 			contract,
 			currency,
-			tokentypes.TokenID(symbol),
+			tokentypes.TokenSymbol(symbol),
 			name,
 			common.NewBig(initialSupply),
 		))

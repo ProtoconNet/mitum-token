@@ -79,12 +79,14 @@ func (opp *ApproveProcessor) PreProcess(
 				Errorf("%v", err)), nil
 	}
 
-	if err := currencystate.CheckExistsState(statecurrency.StateKeyCurrencyDesign(fact.Currency()), getStateFunc); err != nil {
+	if err := currencystate.CheckExistsState(
+		statecurrency.StateKeyCurrencyDesign(fact.Currency()), getStateFunc); err != nil {
 		return ctx, base.NewBaseOperationProcessReasonError(
 			common.ErrMPreProcess.Wrap(common.ErrMCurrencyNF).Errorf("currency id, %v", fact.Currency())), nil
 	}
 
-	if _, _, aErr, cErr := currencystate.ExistsCAccount(fact.Sender(), "sender", true, false, getStateFunc); aErr != nil {
+	if _, _, aErr, cErr := currencystate.ExistsCAccount(
+		fact.Sender(), "sender", true, false, getStateFunc); aErr != nil {
 		return ctx, base.NewBaseOperationProcessReasonError(
 			common.ErrMPreProcess.
 				Errorf("%v", aErr)), nil
@@ -94,7 +96,8 @@ func (opp *ApproveProcessor) PreProcess(
 				Errorf("%v", cErr)), nil
 	}
 
-	_, _, aErr, cErr := currencystate.ExistsCAccount(fact.Contract(), "contract", true, true, getStateFunc)
+	_, _, aErr, cErr := currencystate.ExistsCAccount(
+		fact.Contract(), "contract", true, true, getStateFunc)
 	if aErr != nil {
 		return ctx, base.NewBaseOperationProcessReasonError(
 			common.ErrMPreProcess.
@@ -105,7 +108,8 @@ func (opp *ApproveProcessor) PreProcess(
 				Errorf("%v", cErr)), nil
 	}
 
-	if _, _, aErr, cErr := currencystate.ExistsCAccount(fact.Approved(), "approved", true, false, getStateFunc); aErr != nil {
+	if _, _, aErr, cErr := currencystate.ExistsCAccount(
+		fact.Approved(), "approved", true, false, getStateFunc); aErr != nil {
 		return ctx, base.NewBaseOperationProcessReasonError(
 			common.ErrMPreProcess.
 				Errorf("%v", aErr)), nil
@@ -117,35 +121,37 @@ func (opp *ApproveProcessor) PreProcess(
 
 	keyGenerator := state.NewStateKeyGenerator(fact.Contract())
 
-	if st, err := currencystate.ExistsState(keyGenerator.Design(), "design", getStateFunc); err != nil {
+	if st, err := currencystate.ExistsState(
+		keyGenerator.Design(), "design", getStateFunc); err != nil {
 		return nil, base.NewBaseOperationProcessReasonError(
 			common.ErrMPreProcess.
-				Wrap(common.ErrMServiceNF).Errorf("token design, %v",
+				Wrap(common.ErrMServiceNF).Errorf("token design state for contract account %v",
 				fact.Contract(),
 			)), nil
 	} else if design, err := state.StateDesignValue(st); err != nil {
 		return nil, base.NewBaseOperationProcessReasonError(
 			common.ErrMPreProcess.
-				Wrap(common.ErrMServiceNF).Errorf("token design, %v",
+				Wrap(common.ErrMServiceNF).Errorf("token design state value for contract account %v",
 				fact.Contract(),
 			)), nil
 	} else if apb := design.Policy().GetApproveBox(fact.Sender()); apb == nil {
 		if fact.Amount().IsZero() {
 			return nil, base.NewBaseOperationProcessReasonError(
-				common.ErrMPreProcess.
-					Errorf("sender account has approved no accounts, %v: %v", fact.Sender(), err)), nil
+				common.ErrMPreProcess.Wrap(common.ErrMValueInvalid).
+					Errorf("sender %v has not approved any accounts", fact.Sender())), nil
 		}
 	} else if aprInfo := apb.GetApproveInfo(fact.Approved()); aprInfo == nil {
 		if fact.Amount().IsZero() {
 			return nil, base.NewBaseOperationProcessReasonError(
-				common.ErrMPreProcess.
-					Errorf("approved account has not been approved, %v: %v", fact.Approved(), err)), nil
+				common.ErrMPreProcess.Wrap(common.ErrMValueInvalid).
+					Errorf("approved account %v has not been approved",
+						fact.Approved())), nil
 		}
 	}
 	if err := currencystate.CheckExistsState(keyGenerator.TokenBalance(fact.Sender()), getStateFunc); err != nil {
 		return nil, base.NewBaseOperationProcessReasonError(
-			common.ErrMPreProcess.
-				Errorf("token balance not found, %v: %v", utils.JoinStringers(fact.Contract(), fact.Sender()), err)), nil
+			common.ErrMPreProcess.Wrap(common.ErrMStateNF).
+				Errorf("token balance for sender %v in contract account %v", fact.Sender(), fact.Contract())), nil
 	}
 
 	if err := currencystate.CheckFactSignsByState(fact.Sender(), op.Signs(), getStateFunc); err != nil {
@@ -182,7 +188,7 @@ func (opp *ApproveProcessor) Process(
 		sts = append(sts, v...)
 	}
 
-	st, _ := currencystate.ExistsState(keyGenerator.Design(), "key of design", getStateFunc)
+	st, _ := currencystate.ExistsState(keyGenerator.Design(), "design", getStateFunc)
 	design, _ := state.StateDesignValue(st)
 	apb := design.Policy().GetApproveBox(fact.Sender())
 	if apb == nil {

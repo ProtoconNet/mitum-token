@@ -49,11 +49,11 @@ func (fact BurnFact) IsValid(b []byte) error {
 	}
 
 	if fact.contract.Equal(fact.target) {
-		return common.ErrFactInvalid.Wrap(common.ErrSelfTarget.Wrap(errors.Errorf("contract address is same with target, %s", fact.target)))
+		return common.ErrFactInvalid.Wrap(common.ErrSelfTarget.Wrap(errors.Errorf("target %v is same with contract account", fact.target)))
 	}
 
 	if !fact.amount.OverZero() {
-		return common.ErrFactInvalid.Wrap(common.ErrValOOR.Wrap(errors.Errorf("zero amount")))
+		return common.ErrFactInvalid.Wrap(common.ErrValOOR.Wrap(errors.Errorf("burn amount must be over zero, got %v", fact.amount)))
 	}
 
 	if err := common.IsValidOperationFact(fact, b); err != nil {

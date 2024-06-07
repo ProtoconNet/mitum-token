@@ -1,34 +1,34 @@
 package types
 
 import (
+	"github.com/ProtoconNet/mitum-currency/v3/common"
+	"github.com/pkg/errors"
 	"regexp"
-
-	"github.com/ProtoconNet/mitum2/util"
 )
 
 var (
-	MinLengthTokenID = 3
-	MaxLengthTokenID = 10
-	ReValidTokenID   = regexp.MustCompile(`^[A-Z0-9][A-Z0-9_\.\!\$\*\@]*[A-Z0-9]$`)
-	ReSpcecialChar   = regexp.MustCompile(`^[^\s:/?#\[\]@]*$`)
+	MinLengthTokenSymbol = 3
+	MaxLengthTokenSymbol = 10
+	ReValidTokenSymbol   = regexp.MustCompile(`^[A-Z0-9][A-Z0-9_\.\!\$\*\@]*[A-Z0-9]$`)
+	ReSpcecialChar       = regexp.MustCompile(`^[^\s:/?#\[\]@]*$`)
 )
 
-type TokenID string
+type TokenSymbol string
 
-func (cid TokenID) Bytes() []byte {
-	return []byte(cid)
+func (ts TokenSymbol) Bytes() []byte {
+	return []byte(ts)
 }
 
-func (cid TokenID) String() string {
-	return string(cid)
+func (ts TokenSymbol) String() string {
+	return string(ts)
 }
 
-func (cid TokenID) IsValid([]byte) error {
-	if l := len(cid); l < MinLengthTokenID || l > MaxLengthTokenID {
-		return util.ErrInvalid.Errorf(
-			"invalid length of token id, %d <= %d <= %d", MinLengthTokenID, l, MaxLengthTokenID)
-	} else if !ReValidTokenID.Match([]byte(cid)) {
-		return util.ErrInvalid.Errorf("wrong token id, %v", cid)
+func (ts TokenSymbol) IsValid([]byte) error {
+	if l := len(ts); l < MinLengthTokenSymbol || l > MaxLengthTokenSymbol {
+		return common.ErrValOOR.Wrap(errors.Errorf(
+			"invalid length of token symbol, %d <= %d <= %d", MinLengthTokenSymbol, l, MaxLengthTokenSymbol))
+	} else if !ReValidTokenSymbol.Match([]byte(ts)) {
+		return common.ErrValueInvalid.Wrap(errors.Errorf("wrong token symbol, %v", ts))
 	}
 
 	return nil

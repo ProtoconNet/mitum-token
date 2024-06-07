@@ -49,20 +49,26 @@ func (fact ApproveFact) IsValid(b []byte) error {
 	}
 
 	if fact.sender.Equal(fact.approved) {
-		return common.ErrFactInvalid.Wrap(common.ErrSelfTarget.Wrap(errors.Errorf("sender address is same with approved, %s", fact.approved)))
+		return common.ErrFactInvalid.Wrap(
+			common.ErrSelfTarget.Wrap(errors.Errorf("sender %v is same with approved", fact.sender)))
 	}
 
 	if fact.contract.Equal(fact.approved) {
-		return common.ErrFactInvalid.Wrap(common.ErrSelfTarget.Wrap(errors.Errorf("contract address is same with approved, %s", fact.approved)))
+		return common.ErrFactInvalid.Wrap(
+			common.ErrSelfTarget.Wrap(
+				errors.Errorf("approve %v is is same with contract account", fact.approved)))
 	}
 
 	if !fact.amount.OverNil() {
-		return common.ErrFactInvalid.Wrap(common.ErrValOOR.Wrap(errors.Errorf("under zero")))
+		return common.ErrFactInvalid.Wrap(
+			common.ErrValOOR.Wrap(
+				errors.Errorf("approve amount must be greater than or equal to zero, got %v", fact.amount)))
 	}
 
 	if err := common.IsValidOperationFact(fact, b); err != nil {
 		return common.ErrFactInvalid.Wrap(err)
 	}
+
 	return nil
 }
 

@@ -5,20 +5,20 @@ import (
 	"github.com/ProtoconNet/mitum-token/types"
 )
 
-type TokenIDFlag struct {
-	CID types.TokenID
+type TokenSymbolFlag struct {
+	Symbol types.TokenSymbol
 }
 
-func (v *TokenIDFlag) UnmarshalText(b []byte) error {
-	cid := types.TokenID(string(b))
+func (v *TokenSymbolFlag) UnmarshalText(b []byte) error {
+	cid := types.TokenSymbol(string(b))
 	if err := cid.IsValid(nil); err != nil {
-		return fmt.Errorf("invalid token id, %q, %w", string(b), err)
+		return fmt.Errorf("invalid token symbol, %q, %w", string(b), err)
 	}
-	v.CID = cid
+	v.Symbol = cid
 
 	return nil
 }
 
-func (v *TokenIDFlag) String() string {
-	return v.CID.String()
+func (v *TokenSymbolFlag) String() string {
+	return v.Symbol.String()
 }

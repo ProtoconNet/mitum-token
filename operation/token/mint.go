@@ -49,11 +49,11 @@ func (fact MintFact) IsValid(b []byte) error {
 	}
 
 	if fact.contract.Equal(fact.receiver) {
-		return common.ErrFactInvalid.Wrap(common.ErrSelfTarget.Wrap(errors.Errorf("contract address is same with receiver, %s", fact.receiver)))
+		return common.ErrFactInvalid.Wrap(common.ErrSelfTarget.Wrap(errors.Errorf("receiver %v is same with contract address", fact.receiver)))
 	}
 
 	if !fact.amount.OverZero() {
-		return common.ErrFactInvalid.Wrap(common.ErrValOOR.Wrap(errors.Errorf("zero amount")))
+		return common.ErrFactInvalid.Wrap(common.ErrValOOR.Wrap(errors.Errorf("mint amount must be over zero, got %v", fact.amount)))
 	}
 
 	if err := common.IsValidOperationFact(fact, b); err != nil {

@@ -9,7 +9,7 @@ import (
 func (fact *RegisterTokenFact) unpack(enc encoder.Encoder,
 	symbol, name, ts string,
 ) error {
-	fact.symbol = types.TokenID(symbol)
+	fact.symbol = types.TokenSymbol(symbol)
 	fact.name = name
 
 	big, err := common.NewBigFromString(ts)

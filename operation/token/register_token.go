@@ -18,7 +18,7 @@ var (
 
 type RegisterTokenFact struct {
 	TokenFact
-	symbol        types.TokenID
+	symbol        types.TokenSymbol
 	name          string
 	initialSupply common.Big
 }
@@ -27,7 +27,7 @@ func NewRegisterTokenFact(
 	token []byte,
 	sender, contract base.Address,
 	currency currencytypes.CurrencyID,
-	symbol types.TokenID,
+	symbol types.TokenSymbol,
 	name string,
 	initialSupply common.Big,
 ) RegisterTokenFact {
@@ -53,7 +53,9 @@ func (fact RegisterTokenFact) IsValid(b []byte) error {
 	}
 
 	if !fact.initialSupply.OverNil() {
-		return common.ErrFactInvalid.Wrap(common.ErrValOOR.Wrap(errors.Errorf("zero initial supply")))
+		return common.ErrFactInvalid.Wrap(
+			common.ErrValOOR.Wrap(
+				errors.Errorf("initial supply must be bigger than or equal to zero, got %v", fact.initialSupply)))
 	}
 
 	if err := common.IsValidOperationFact(fact, b); err != nil {
@@ -79,7 +81,7 @@ func (fact RegisterTokenFact) Name() string {
 	return fact.name
 }
 
-func (fact RegisterTokenFact) Symbol() types.TokenID {
+func (fact RegisterTokenFact) Symbol() types.TokenSymbol {
 	return fact.symbol
 }
 

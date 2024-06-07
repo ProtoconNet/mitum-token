@@ -13,7 +13,7 @@ import (
 
 type RegisterTokenCommand struct {
 	OperationCommand
-	Symbol        TokenIDFlag          `arg:"" name:"symbol" help:"token symbol" required:"true"`
+	Symbol        TokenSymbolFlag      `arg:"" name:"symbol" help:"token symbol" required:"true"`
 	Name          string               `arg:"" name:"name" help:"token name" required:"true"`
 	InitialSupply currencycmds.BigFlag `arg:"" name:"initial-supply" help:"initial supply of token" required:"true"`
 }
@@ -43,7 +43,7 @@ func (cmd *RegisterTokenCommand) createOperation() (base.Operation, error) { // 
 	fact := token.NewRegisterTokenFact(
 		[]byte(cmd.Token),
 		cmd.sender, cmd.contract,
-		cmd.Currency.CID, cmd.Symbol.CID,
+		cmd.Currency.CID, cmd.Symbol.Symbol,
 		cmd.Name,
 		cmd.InitialSupply.Big,
 	)

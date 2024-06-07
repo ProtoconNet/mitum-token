@@ -10,7 +10,6 @@ import (
 	"github.com/ProtoconNet/mitum-token/utils"
 
 	currencystate "github.com/ProtoconNet/mitum-currency/v3/state"
-	"github.com/ProtoconNet/mitum-currency/v3/state/currency"
 	extstate "github.com/ProtoconNet/mitum-currency/v3/state/extension"
 	currencytypes "github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum-token/state"
@@ -83,20 +82,22 @@ func (opp *MintProcessor) PreProcess(
 	_, err := currencystate.ExistsCurrencyPolicy(fact.Currency(), getStateFunc)
 	if err != nil {
 		return nil, base.NewBaseOperationProcessReasonError(
-			common.ErrMPreProcess.Wrap(common.ErrMCurrencyNF).Errorf("%v: %v", fact.Currency(), err)), nil
+			common.ErrMPreProcess.Wrap(common.ErrMCurrencyNF).Errorf("curnency id %v", fact.Currency())), nil
 	}
 
-	if _, _, aErr, cErr := currencystate.ExistsCAccount(fact.Sender(), "sender", true, false, getStateFunc); aErr != nil {
+	if _, _, aErr, cErr := currencystate.ExistsCAccount(
+		fact.Sender(), "sender", true, false, getStateFunc); aErr != nil {
 		return ctx, base.NewBaseOperationProcessReasonError(
 			common.ErrMPreProcess.
 				Errorf("%v", aErr)), nil
 	} else if cErr != nil {
 		return ctx, base.NewBaseOperationProcessReasonError(
 			common.ErrMPreProcess.Wrap(common.ErrMCAccountNA).
-				Errorf("%v: sender account is contract account, %v", fact.Sender(), cErr)), nil
+				Errorf("%v: sender %v is contract account", cErr, fact.Sender())), nil
 	}
 
-	_, cSt, aErr, cErr := currencystate.ExistsCAccount(fact.Contract(), "contract", true, true, getStateFunc)
+	_, cSt, aErr, cErr := currencystate.ExistsCAccount(
+		fact.Contract(), "contract", true, true, getStateFunc)
 	if aErr != nil {
 		return ctx, base.NewBaseOperationProcessReasonError(
 			common.ErrMPreProcess.
@@ -114,18 +115,31 @@ func (opp *MintProcessor) PreProcess(
 				Errorf("%v", err)), nil
 	}
 
-	if err := currencystate.CheckExistsState(currency.StateKeyAccount(fact.Receiver()), getStateFunc); err != nil {
-		return nil, ErrBaseOperationProcess(err, "receiver not found, %s", fact.Receiver().String()), nil
-	}
-
-	if _, _, aErr, cErr := currencystate.ExistsCAccount(fact.Receiver(), "receiver", true, false, getStateFunc); aErr != nil {
+	if _, _, aErr, cErr := currencystate.ExistsCAccount(
+		fact.Receiver(), "receiver", true, false, getStateFunc); aErr != nil {
 		return ctx, base.NewBaseOperationProcessReasonError(
 			common.ErrMPreProcess.
 				Errorf("%v", aErr)), nil
 	} else if cErr != nil {
 		return ctx, base.NewBaseOperationProcessReasonError(
 			common.ErrMPreProcess.Wrap(common.ErrMCAccountNA).
-				Errorf("%v: receiver account is contract account, %v", fact.Receiver(), cErr)), nil
+				Errorf("%v: receiver %v is contract account", cErr, fact.Receiver())), nil
+	}
+
+	keyGenerator := state.NewStateKeyGenerator(fact.Contract())
+
+	if st, err := currencystate.ExistsState(keyGenerator.Design(), "design", getStateFunc); err != nil {
+		return nil, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.
+				Wrap(common.ErrMServiceNF).Errorf("token design state for contract account %v",
+				fact.Contract(),
+			)), nil
+	} else if _, err := state.StateDesignValue(st); err != nil {
+		return nil, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.
+				Wrap(common.ErrMServiceNF).Errorf("token design state value for contract account %v",
+				fact.Contract(),
+			)), nil
 	}
 
 	if err := currencystate.CheckFactSignsByState(fact.Sender(), op.Signs(), getStateFunc); err != nil {
@@ -162,7 +176,7 @@ func (opp *MintProcessor) Process(
 		sts = append(sts, v...)
 	}
 
-	st, err := currencystate.ExistsState(g.Design(), "key of design", getStateFunc)
+	st, err := currencystate.ExistsState(g.Design(), "design", getStateFunc)
 	if err != nil {
 		return nil, ErrBaseOperationProcess(err, "token design not found, %s", fact.Contract().String()), nil
 	}

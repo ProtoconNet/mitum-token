@@ -9,9 +9,9 @@ import (
 
 type RegisterTokenFactJSONMarshaler struct {
 	TokenFactJSONMarshaler
-	Symbol        types.TokenID `json:"symbol"`
-	Name          string        `json:"name"`
-	InitialSupply common.Big    `json:"initial_supply"`
+	Symbol        types.TokenSymbol `json:"symbol"`
+	Name          string            `json:"name"`
+	InitialSupply common.Big        `json:"initial_supply"`
 }
 
 func (fact RegisterTokenFact) MarshalJSON() ([]byte, error) {
