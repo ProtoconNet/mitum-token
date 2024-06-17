@@ -11,14 +11,14 @@ import (
 	"github.com/ProtoconNet/mitum2/util"
 )
 
-type RegisterTokenCommand struct {
+type RegisterModelCommand struct {
 	OperationCommand
 	Symbol        TokenSymbolFlag      `arg:"" name:"symbol" help:"token symbol" required:"true"`
 	Name          string               `arg:"" name:"name" help:"token name" required:"true"`
 	InitialSupply currencycmds.BigFlag `arg:"" name:"initial-supply" help:"initial supply of token" required:"true"`
 }
 
-func (cmd *RegisterTokenCommand) Run(pctx context.Context) error { // nolint:dupl
+func (cmd *RegisterModelCommand) Run(pctx context.Context) error { // nolint:dupl
 	if _, err := cmd.prepare(pctx); err != nil {
 		return err
 	}
@@ -37,10 +37,10 @@ func (cmd *RegisterTokenCommand) Run(pctx context.Context) error { // nolint:dup
 	return nil
 }
 
-func (cmd *RegisterTokenCommand) createOperation() (base.Operation, error) { // nolint:dupl}
-	e := util.StringError(utils.ErrStringCreate("register-token operation"))
+func (cmd *RegisterModelCommand) createOperation() (base.Operation, error) { // nolint:dupl}
+	e := util.StringError(utils.ErrStringCreate("register-model operation"))
 
-	fact := token.NewRegisterTokenFact(
+	fact := token.NewRegisterModelFact(
 		[]byte(cmd.Token),
 		cmd.sender, cmd.contract,
 		cmd.Currency.CID, cmd.Symbol.Symbol,
@@ -48,7 +48,7 @@ func (cmd *RegisterTokenCommand) createOperation() (base.Operation, error) { // 
 		cmd.InitialSupply.Big,
 	)
 
-	op := token.NewRegisterToken(fact)
+	op := token.NewRegisterModel(fact)
 	if err := op.Sign(cmd.Privatekey, cmd.NetworkID.NetworkID()); err != nil {
 		return nil, e.Wrap(err)
 	}

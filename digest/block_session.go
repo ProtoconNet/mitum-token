@@ -94,7 +94,7 @@ func (bs *BlockSession) Prepare() error {
 	return bs.prepareAccounts()
 }
 
-func (bs *BlockSession) Commit(ctx context.Context) error {
+func (bs *BlockSession) Commit(_ context.Context) error {
 	bs.Lock()
 	defer bs.Unlock()
 
@@ -105,7 +105,7 @@ func (bs *BlockSession) Commit(ctx context.Context) error {
 		_ = bs.close()
 	}()
 
-	_, err := bs.st.DatabaseClient().WithSession(func(txnCtx mongo.SessionContext, collection func(string) *mongo.Collection) (interface{}, error) {
+	_, err := bs.st.MongoClient().WithSession(func(txnCtx mongo.SessionContext, collection func(string) *mongo.Collection) (interface{}, error) {
 		if err := bs.writeModels(txnCtx, defaultColNameBlock, bs.blockModels); err != nil {
 			return nil, err
 		}
@@ -203,7 +203,7 @@ func (bs *BlockSession) prepareBlock() error {
 		bs.block.Manifest().ProposedAt(),
 	)
 
-	doc, err := currencydigest.NewManifestDoc(manifest, bs.st.DatabaseEncoder(), bs.block.Manifest().Height(), bs.ops, bs.block.SignedAt(), bs.proposal.ProposalFact().Proposer(), bs.proposal.ProposalFact().Point().Round(), bs.buildinfo)
+	doc, err := currencydigest.NewManifestDoc(manifest, bs.st.Encoder(), bs.block.Manifest().Height(), bs.ops, bs.block.SignedAt(), bs.proposal.ProposalFact().Proposer(), bs.proposal.ProposalFact().Point().Round(), bs.buildinfo)
 	if err != nil {
 		return err
 	}
@@ -245,7 +245,7 @@ func (bs *BlockSession) prepareOperations() error {
 			}
 			d, err := currencydigest.NewOperationDoc(
 				op,
-				bs.st.DatabaseEncoder(),
+				bs.st.Encoder(),
 				bs.block.Manifest().Height(),
 				bs.block.SignedAt(),
 				inState,
@@ -276,13 +276,13 @@ func (bs *BlockSession) prepareAccounts() error {
 		st := bs.sts[i]
 
 		switch {
-		case statecurrency.IsStateAccountKey(st.Key()):
+		case statecurrency.IsAccountStateKey(st.Key()):
 			j, err := bs.handleAccountState(st)
 			if err != nil {
 				return err
 			}
 			accountModels = append(accountModels, j...)
-		case statecurrency.IsStateBalanceKey(st.Key()):
+		case statecurrency.IsBalanceStateKey(st.Key()):
 			j, address, err := bs.handleBalanceState(st)
 			if err != nil {
 				return err
@@ -316,7 +316,7 @@ func (bs *BlockSession) prepareCurrencies() error {
 	for i := range bs.sts {
 		st := bs.sts[i]
 		switch {
-		case statecurrency.IsStateCurrencyDesignKey(st.Key()):
+		case statecurrency.IsDesignStateKey(st.Key()):
 			j, err := bs.handleCurrencyState(st)
 			if err != nil {
 				return err
@@ -367,7 +367,7 @@ func (bs *BlockSession) writeModels(ctx context.Context, col string, models []mo
 
 func (bs *BlockSession) writeModelsChunk(ctx context.Context, col string, models []mongo.WriteModel) error {
 	opts := options.BulkWrite().SetOrdered(false)
-	if res, err := bs.st.DatabaseClient().Collection(col).BulkWrite(ctx, models, opts); err != nil {
+	if res, err := bs.st.MongoClient().Collection(col).BulkWrite(ctx, models, opts); err != nil {
 		return err
 	} else if res != nil && res.InsertedCount < 1 {
 		return errors.Errorf("not inserted to %s", col)

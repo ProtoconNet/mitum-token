@@ -197,7 +197,7 @@ func (opp *TransferProcessor) Process(
 		},
 	))
 
-	k := currency.StateKeyAccount(fact.Receiver())
+	k := currency.AccountStateKey(fact.Receiver())
 	switch _, found, err := getStateFunc(k); {
 	case err != nil:
 		return nil, nil, e.Wrap(err)

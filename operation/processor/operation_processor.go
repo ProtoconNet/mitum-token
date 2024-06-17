@@ -43,7 +43,7 @@ func CheckDuplication(opr *currencyprocessor.OperationProcessor, op mitumbase.Op
 		if !ok {
 			return errors.Errorf("expected UpdateKeyFact, not %T", t.Fact())
 		}
-		duplicationTypeSenderID = currencyprocessor.DuplicationKey(fact.Target().String(), DuplicationTypeSender)
+		duplicationTypeSenderID = currencyprocessor.DuplicationKey(fact.Sender().String(), DuplicationTypeSender)
 	case currency.Transfer:
 		fact, ok := t.Fact().(currency.TransferFact)
 		if !ok {
@@ -87,8 +87,8 @@ func CheckDuplication(opr *currencyprocessor.OperationProcessor, op mitumbase.Op
 			return errors.Errorf("expected MintFact, not %T", t.Fact())
 		}
 		duplicationTypeSenderID = currencyprocessor.DuplicationKey(fact.Sender().String(), DuplicationTypeSender)
-	case token.RegisterToken:
-		fact, ok := t.Fact().(token.RegisterTokenFact)
+	case token.RegisterModel:
+		fact, ok := t.Fact().(token.RegisterModelFact)
 		if !ok {
 			return errors.Errorf("expected RegisterTokenFact, not %T", t.Fact())
 		}
@@ -188,7 +188,7 @@ func GetNewProcessor(opr *currencyprocessor.OperationProcessor, op mitumbase.Ope
 		currency.RegisterCurrency,
 		currency.UpdateCurrency,
 		currency.Mint,
-		token.RegisterToken,
+		token.RegisterModel,
 		token.Mint,
 		token.Burn,
 		token.Approve,

@@ -7,7 +7,7 @@ import (
 	bsonenc "github.com/ProtoconNet/mitum-currency/v3/digest/util/bson"
 )
 
-func (fact RegisterTokenFact) MarshalBSON() ([]byte, error) {
+func (fact RegisterModelFact) MarshalBSON() ([]byte, error) {
 	m := fact.TokenFact.marshalMap()
 
 	m["symbol"] = fact.symbol
@@ -17,18 +17,18 @@ func (fact RegisterTokenFact) MarshalBSON() ([]byte, error) {
 	return bsonenc.Marshal(m)
 }
 
-type RegisterTokenFactBSONUnmarshaler struct {
+type RegisterModelFactBSONUnmarshaler struct {
 	Symbol        string `bson:"symbol"`
 	Name          string `bson:"name"`
 	InitialSupply string `bson:"initial_supply"`
 }
 
-func (fact *RegisterTokenFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
+func (fact *RegisterModelFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 	if err := fact.TokenFact.DecodeBSON(b, enc); err != nil {
 		return common.DecorateError(err, common.ErrDecodeBson, *fact)
 	}
 
-	var uf RegisterTokenFactBSONUnmarshaler
+	var uf RegisterModelFactBSONUnmarshaler
 	if err := bson.Unmarshal(b, &uf); err != nil {
 		return common.DecorateError(err, common.ErrDecodeBson, *fact)
 	}

@@ -80,7 +80,7 @@ func (opp *ApproveProcessor) PreProcess(
 	}
 
 	if err := currencystate.CheckExistsState(
-		statecurrency.StateKeyCurrencyDesign(fact.Currency()), getStateFunc); err != nil {
+		statecurrency.DesignStateKey(fact.Currency()), getStateFunc); err != nil {
 		return ctx, base.NewBaseOperationProcessReasonError(
 			common.ErrMPreProcess.Wrap(common.ErrMCurrencyNF).Errorf("currency id, %v", fact.Currency())), nil
 	}

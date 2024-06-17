@@ -9,43 +9,43 @@ import (
 	"github.com/ProtoconNet/mitum-token/types"
 	"github.com/ProtoconNet/mitum-token/utils"
 
-	currencystate "github.com/ProtoconNet/mitum-currency/v3/state"
-	extstate "github.com/ProtoconNet/mitum-currency/v3/state/extension"
-	currencytypes "github.com/ProtoconNet/mitum-currency/v3/types"
+	cstate "github.com/ProtoconNet/mitum-currency/v3/state"
+	statee "github.com/ProtoconNet/mitum-currency/v3/state/extension"
+	ctypes "github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum-token/state"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/pkg/errors"
 )
 
-var registerTokenProcessorPool = sync.Pool{
+var registerModelProcessorPool = sync.Pool{
 	New: func() interface{} {
-		return new(RegisterTokenProcessor)
+		return new(RegisterModelProcessor)
 	},
 }
 
-func (RegisterToken) Process(
+func (RegisterModel) Process(
 	_ context.Context, _ base.GetStateFunc,
 ) ([]base.StateMergeValue, base.OperationProcessReasonError, error) {
 	return nil, nil, nil
 }
 
-type RegisterTokenProcessor struct {
+type RegisterModelProcessor struct {
 	*base.BaseOperationProcessor
 }
 
-func NewRegisterTokenProcessor() currencytypes.GetNewProcessor {
+func NewRegisterModelProcessor() ctypes.GetNewProcessor {
 	return func(
 		height base.Height,
 		getStateFunc base.GetStateFunc,
 		newPreProcessConstraintFunc base.NewOperationProcessorProcessFunc,
 		newProcessConstraintFunc base.NewOperationProcessorProcessFunc,
 	) (base.OperationProcessor, error) {
-		t := RegisterTokenProcessor{}
+		t := RegisterModelProcessor{}
 		e := util.StringError(utils.ErrStringCreate(fmt.Sprintf("new %T", t)))
 
-		nopp := registerTokenProcessorPool.Get()
-		opp, ok := nopp.(*RegisterTokenProcessor)
+		nopp := registerModelProcessorPool.Get()
+		opp, ok := nopp.(*RegisterModelProcessor)
 		if !ok {
 			return nil, e.Wrap(errors.Errorf(utils.ErrStringTypeCast(&t, nopp)))
 		}
@@ -62,15 +62,15 @@ func NewRegisterTokenProcessor() currencytypes.GetNewProcessor {
 	}
 }
 
-func (opp *RegisterTokenProcessor) PreProcess(
+func (opp *RegisterModelProcessor) PreProcess(
 	ctx context.Context, op base.Operation, getStateFunc base.GetStateFunc,
 ) (context.Context, base.OperationProcessReasonError, error) {
-	fact, ok := op.Fact().(RegisterTokenFact)
+	fact, ok := op.Fact().(RegisterModelFact)
 	if !ok {
 		return ctx, base.NewBaseOperationProcessReasonError(
 			common.ErrMPreProcess.
 				Wrap(common.ErrMTypeMismatch).
-				Errorf("expected %T, not %T", RegisterTokenFact{}, op.Fact())), nil
+				Errorf("expected %T, not %T", RegisterModelFact{}, op.Fact())), nil
 	}
 
 	if err := fact.IsValid(nil); err != nil {
@@ -79,13 +79,13 @@ func (opp *RegisterTokenProcessor) PreProcess(
 				Errorf("%v", err)), nil
 	}
 
-	_, err := currencystate.ExistsCurrencyPolicy(fact.Currency(), getStateFunc)
+	_, err := cstate.ExistsCurrencyPolicy(fact.Currency(), getStateFunc)
 	if err != nil {
 		return nil, base.NewBaseOperationProcessReasonError(
 			common.ErrMPreProcess.Wrap(common.ErrMCurrencyNF).Errorf("currency id %v", fact.Currency())), nil
 	}
 
-	if _, _, aErr, cErr := currencystate.ExistsCAccount(fact.Sender(), "sender", true, false, getStateFunc); aErr != nil {
+	if _, _, aErr, cErr := cstate.ExistsCAccount(fact.Sender(), "sender", true, false, getStateFunc); aErr != nil {
 		return ctx, base.NewBaseOperationProcessReasonError(
 			common.ErrMPreProcess.
 				Errorf("%v", aErr)), nil
@@ -95,7 +95,7 @@ func (opp *RegisterTokenProcessor) PreProcess(
 				Errorf("%v: sender %v is contract account", cErr, fact.Sender())), nil
 	}
 
-	_, cSt, aErr, cErr := currencystate.ExistsCAccount(fact.Contract(), "contract", true, true, getStateFunc)
+	_, cSt, aErr, cErr := cstate.ExistsCAccount(fact.Contract(), "contract", true, true, getStateFunc)
 	if aErr != nil {
 		return ctx, base.NewBaseOperationProcessReasonError(
 			common.ErrMPreProcess.
@@ -106,7 +106,7 @@ func (opp *RegisterTokenProcessor) PreProcess(
 				Errorf("%v", cErr)), nil
 	}
 
-	ca, err := extstate.CheckCAAuthFromState(cSt, fact.Sender())
+	ca, err := statee.CheckCAAuthFromState(cSt, fact.Sender())
 	if err != nil {
 		return ctx, base.NewBaseOperationProcessReasonError(
 			common.ErrMPreProcess.
@@ -122,21 +122,21 @@ func (opp *RegisterTokenProcessor) PreProcess(
 
 	g := state.NewStateKeyGenerator(fact.Contract())
 
-	if found, _ := currencystate.CheckNotExistsState(g.Design(), getStateFunc); found {
+	if found, _ := cstate.CheckNotExistsState(g.Design(), getStateFunc); found {
 		return ctx, base.NewBaseOperationProcessReasonError(
 			common.ErrMPreProcess.
 				Wrap(common.ErrMServiceE).Errorf("token design for contract account %v", fact.Contract())), nil
 	}
 
 	if fact.InitialSupply().OverZero() {
-		if found, _ := currencystate.CheckNotExistsState(g.TokenBalance(ca.Owner()), getStateFunc); found {
+		if found, _ := cstate.CheckNotExistsState(g.TokenBalance(ca.Owner()), getStateFunc); found {
 			return ctx, base.NewBaseOperationProcessReasonError(
 				common.ErrMPreProcess.
 					Wrap(common.ErrMServiceE).Errorf("token initial supply for contract account %v", fact.Contract())), nil
 		}
 	}
 
-	if err := currencystate.CheckFactSignsByState(fact.Sender(), op.Signs(), getStateFunc); err != nil {
+	if err := cstate.CheckFactSignsByState(fact.Sender(), op.Signs(), getStateFunc); err != nil {
 		return ctx, base.NewBaseOperationProcessReasonError(
 			common.ErrMPreProcess.
 				Wrap(common.ErrMSignInvalid).
@@ -146,15 +146,15 @@ func (opp *RegisterTokenProcessor) PreProcess(
 	return ctx, nil, nil
 }
 
-func (opp *RegisterTokenProcessor) Process(
+func (opp *RegisterModelProcessor) Process(
 	_ context.Context, op base.Operation, getStateFunc base.GetStateFunc) (
 	[]base.StateMergeValue, base.OperationProcessReasonError, error,
 ) {
 	e := util.StringError(ErrStringProcess(*opp))
 
-	fact, ok := op.Fact().(RegisterTokenFact)
+	fact, ok := op.Fact().(RegisterModelFact)
 	if !ok {
-		return nil, nil, e.Wrap(errors.Errorf(utils.ErrStringTypeCast(RegisterTokenFact{}, op.Fact())))
+		return nil, nil, e.Wrap(errors.Errorf(utils.ErrStringTypeCast(RegisterModelFact{}, op.Fact())))
 	}
 
 	g := state.NewStateKeyGenerator(fact.Contract())
@@ -179,25 +179,25 @@ func (opp *RegisterTokenProcessor) Process(
 		return nil, ErrInvalid(design, err), nil
 	}
 
-	sts = append(sts, currencystate.NewStateMergeValue(
+	sts = append(sts, cstate.NewStateMergeValue(
 		g.Design(),
 		state.NewDesignStateValue(design),
 	))
 
-	st, err := currencystate.ExistsState(extstate.StateKeyContractAccount(fact.Contract()), "contract account", getStateFunc)
+	st, err := cstate.ExistsState(statee.StateKeyContractAccount(fact.Contract()), "contract account", getStateFunc)
 	if err != nil {
 		return nil, ErrStateNotFound("contract", fact.Contract().String(), err), nil
 	}
 
-	ca, err := extstate.StateContractAccountValue(st)
+	ca, err := statee.StateContractAccountValue(st)
 	if err != nil {
 		return nil, ErrStateNotFound("contract value", fact.Contract().String(), err), nil
 	}
 	nca := ca.SetIsActive(true)
 
-	sts = append(sts, currencystate.NewStateMergeValue(
-		extstate.StateKeyContractAccount(fact.Contract()),
-		extstate.NewContractAccountStateValue(nca),
+	sts = append(sts, cstate.NewStateMergeValue(
+		statee.StateKeyContractAccount(fact.Contract()),
+		statee.NewContractAccountStateValue(nca),
 	))
 
 	if fact.InitialSupply().OverZero() {
@@ -217,7 +217,7 @@ func (opp *RegisterTokenProcessor) Process(
 	return sts, nil, nil
 }
 
-func (opp *RegisterTokenProcessor) Close() error {
-	registerTokenProcessorPool.Put(opp)
+func (opp *RegisterModelProcessor) Close() error {
+	registerModelProcessorPool.Put(opp)
 	return nil
 }

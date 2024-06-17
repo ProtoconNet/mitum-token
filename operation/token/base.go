@@ -96,7 +96,7 @@ func calculateCurrencyFee(fact TokenFact, getStateFunc base.GetStateFunc) (
 	}
 
 	senderBalSt, err := state.ExistsState(
-		currencystate.StateKeyBalance(fact.Sender(), fact.Currency()),
+		currencystate.BalanceStateKey(fact.Sender(), fact.Currency()),
 		"sender balance",
 		getStateFunc,
 	)
@@ -112,7 +112,7 @@ func calculateCurrencyFee(fact TokenFact, getStateFunc base.GetStateFunc) (
 	case err != nil:
 		return nil, base.NewBaseOperationProcessReasonError(
 			"failed to get balance value, %q; %w",
-			currencystate.StateKeyBalance(fact.Sender(), fact.Currency()),
+			currencystate.BalanceStateKey(fact.Sender(), fact.Currency()),
 			err,
 		), nil
 	case senderBal.Big().Compare(fee) < 0:
@@ -127,9 +127,9 @@ func calculateCurrencyFee(fact TokenFact, getStateFunc base.GetStateFunc) (
 		return nil, base.NewBaseOperationProcessReasonError("expected BalanceStateValue, not %T", senderBalSt.Value()), nil
 	}
 
-	if err := state.CheckExistsState(currencystate.StateKeyAccount(currencyPolicy.Feeer().Receiver()), getStateFunc); err != nil {
+	if err := state.CheckExistsState(currencystate.AccountStateKey(currencyPolicy.Feeer().Receiver()), getStateFunc); err != nil {
 		return nil, nil, err
-	} else if feeRcvrSt, found, err := getStateFunc(currencystate.StateKeyBalance(currencyPolicy.Feeer().Receiver(), fact.currency)); err != nil {
+	} else if feeRcvrSt, found, err := getStateFunc(currencystate.BalanceStateKey(currencyPolicy.Feeer().Receiver(), fact.currency)); err != nil {
 		return nil, nil, err
 	} else if !found {
 		return nil, nil, errors.Errorf("feeer receiver %s not found", currencyPolicy.Feeer().Receiver())

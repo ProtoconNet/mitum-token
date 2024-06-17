@@ -12,28 +12,28 @@ import (
 )
 
 var (
-	RegisterTokenFactHint = hint.MustNewHint("mitum-token-register-token-operation-fact-v0.0.1")
-	RegisterTokenHint     = hint.MustNewHint("mitum-token-register-token-operation-v0.0.1")
+	RegisterModelFactHint = hint.MustNewHint("mitum-token-register-model-operation-fact-v0.0.1")
+	RegisterModelHint     = hint.MustNewHint("mitum-token-register-model-operation-v0.0.1")
 )
 
-type RegisterTokenFact struct {
+type RegisterModelFact struct {
 	TokenFact
 	symbol        types.TokenSymbol
 	name          string
 	initialSupply common.Big
 }
 
-func NewRegisterTokenFact(
+func NewRegisterModelFact(
 	token []byte,
 	sender, contract base.Address,
 	currency currencytypes.CurrencyID,
 	symbol types.TokenSymbol,
 	name string,
 	initialSupply common.Big,
-) RegisterTokenFact {
-	fact := RegisterTokenFact{
+) RegisterModelFact {
+	fact := RegisterModelFact{
 		TokenFact: NewTokenFact(
-			base.NewBaseFact(RegisterTokenFactHint, token), sender, contract, currency,
+			base.NewBaseFact(RegisterModelFactHint, token), sender, contract, currency,
 		),
 		symbol:        symbol,
 		name:          name,
@@ -43,7 +43,7 @@ func NewRegisterTokenFact(
 	return fact
 }
 
-func (fact RegisterTokenFact) IsValid(b []byte) error {
+func (fact RegisterModelFact) IsValid(b []byte) error {
 	if err := util.CheckIsValiders(nil, false, fact.TokenFact, fact.symbol); err != nil {
 		return common.ErrFactInvalid.Wrap(err)
 	}
@@ -64,11 +64,11 @@ func (fact RegisterTokenFact) IsValid(b []byte) error {
 	return nil
 }
 
-func (fact RegisterTokenFact) GenerateHash() util.Hash {
+func (fact RegisterModelFact) GenerateHash() util.Hash {
 	return valuehash.NewSHA256(fact.Bytes())
 }
 
-func (fact RegisterTokenFact) Bytes() []byte {
+func (fact RegisterModelFact) Bytes() []byte {
 	return util.ConcatBytesSlice(
 		fact.TokenFact.Bytes(),
 		fact.symbol.Bytes(),
@@ -77,22 +77,22 @@ func (fact RegisterTokenFact) Bytes() []byte {
 	)
 }
 
-func (fact RegisterTokenFact) Name() string {
+func (fact RegisterModelFact) Name() string {
 	return fact.name
 }
 
-func (fact RegisterTokenFact) Symbol() types.TokenSymbol {
+func (fact RegisterModelFact) Symbol() types.TokenSymbol {
 	return fact.symbol
 }
 
-func (fact RegisterTokenFact) InitialSupply() common.Big {
+func (fact RegisterModelFact) InitialSupply() common.Big {
 	return fact.initialSupply
 }
 
-type RegisterToken struct {
+type RegisterModel struct {
 	common.BaseOperation
 }
 
-func NewRegisterToken(fact RegisterTokenFact) RegisterToken {
-	return RegisterToken{BaseOperation: common.NewBaseOperation(RegisterTokenHint, fact)}
+func NewRegisterModel(fact RegisterModelFact) RegisterModel {
+	return RegisterModel{BaseOperation: common.NewBaseOperation(RegisterModelHint, fact)}
 }

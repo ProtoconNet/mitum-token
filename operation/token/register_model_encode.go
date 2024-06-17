@@ -6,7 +6,7 @@ import (
 	"github.com/ProtoconNet/mitum2/util/encoder"
 )
 
-func (fact *RegisterTokenFact) unpack(enc encoder.Encoder,
+func (fact *RegisterModelFact) unpack(enc encoder.Encoder,
 	symbol, name, ts string,
 ) error {
 	fact.symbol = types.TokenSymbol(symbol)
