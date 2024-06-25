@@ -174,7 +174,7 @@ func (opp *RegisterModelProcessor) Process(
 		return nil, ErrInvalid(policy, err), nil
 	}
 
-	design := types.NewDesign(fact.Symbol(), fact.Name(), policy)
+	design := types.NewDesign(fact.Symbol(), fact.Name(), fact.Decimal(), policy)
 	if err := design.IsValid(nil); err != nil {
 		return nil, ErrInvalid(design, err), nil
 	}

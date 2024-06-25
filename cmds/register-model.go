@@ -15,6 +15,7 @@ type RegisterModelCommand struct {
 	OperationCommand
 	Symbol        TokenSymbolFlag      `arg:"" name:"symbol" help:"token symbol" required:"true"`
 	Name          string               `arg:"" name:"name" help:"token name" required:"true"`
+	Decimal       currencycmds.BigFlag `arg:"" name:"decimal" help:"decimal of token" required:"true"`
 	InitialSupply currencycmds.BigFlag `arg:"" name:"initial-supply" help:"initial supply of token" required:"true"`
 }
 
@@ -45,6 +46,7 @@ func (cmd *RegisterModelCommand) createOperation() (base.Operation, error) { // 
 		cmd.sender, cmd.contract,
 		cmd.Currency.CID, cmd.Symbol.Symbol,
 		cmd.Name,
+		cmd.Decimal.Big,
 		cmd.InitialSupply.Big,
 	)
 

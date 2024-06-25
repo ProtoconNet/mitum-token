@@ -7,12 +7,18 @@ import (
 )
 
 func (fact *RegisterModelFact) unpack(enc encoder.Encoder,
-	symbol, name, ts string,
+	symbol, name, decimal, initialSupply string,
 ) error {
 	fact.symbol = types.TokenSymbol(symbol)
 	fact.name = name
 
-	big, err := common.NewBigFromString(ts)
+	big, err := common.NewBigFromString(decimal)
+	if err != nil {
+		return err
+	}
+	fact.decimal = big
+
+	big, err = common.NewBigFromString(initialSupply)
 	if err != nil {
 		return err
 	}

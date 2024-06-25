@@ -11,9 +11,10 @@ import (
 
 type DesignJSONMarshaler struct {
 	hint.BaseHinter
-	Symbol TokenSymbol `json:"symbol"`
-	Name   string      `json:"name"`
-	Policy Policy      `json:"policy"`
+	Symbol  TokenSymbol `json:"symbol"`
+	Name    string      `json:"name"`
+	Decimal string      `json:"decimal"`
+	Policy  Policy      `json:"policy"`
 }
 
 func (d Design) MarshalJSON() ([]byte, error) {
@@ -21,15 +22,17 @@ func (d Design) MarshalJSON() ([]byte, error) {
 		BaseHinter: d.BaseHinter,
 		Symbol:     d.symbol,
 		Name:       d.name,
+		Decimal:    d.decimal.String(),
 		Policy:     d.policy,
 	})
 }
 
 type DesignJSONUnmarshaler struct {
-	Hint   hint.Hint       `json:"_hint"`
-	Symbol string          `json:"symbol"`
-	Name   string          `json:"name"`
-	Policy json.RawMessage `json:"policy"`
+	Hint    hint.Hint       `json:"_hint"`
+	Symbol  string          `json:"symbol"`
+	Name    string          `json:"name"`
+	Decimal string          `json:"decimal"`
+	Policy  json.RawMessage `json:"policy"`
 }
 
 func (d *Design) DecodeJSON(b []byte, enc encoder.Encoder) error {
@@ -40,5 +43,5 @@ func (d *Design) DecodeJSON(b []byte, enc encoder.Encoder) error {
 		return e.Wrap(err)
 	}
 
-	return d.unpack(enc, u.Hint, u.Symbol, u.Name, u.Policy)
+	return d.unpack(enc, u.Hint, u.Symbol, u.Name, u.Decimal, u.Policy)
 }

@@ -270,7 +270,7 @@ func (opp *TransferFromProcessor) Process(
 		return nil, ErrInvalid(policy, err), nil
 	}
 
-	de := types.NewDesign(design.Symbol(), design.Name(), policy)
+	de := types.NewDesign(design.Symbol(), design.Name(), design.Decimal(), policy)
 	if err := de.IsValid(nil); err != nil {
 		return nil, ErrInvalid(de, err), nil
 	}

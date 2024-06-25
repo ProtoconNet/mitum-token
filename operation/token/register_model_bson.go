@@ -12,6 +12,7 @@ func (fact RegisterModelFact) MarshalBSON() ([]byte, error) {
 
 	m["symbol"] = fact.symbol
 	m["name"] = fact.name
+	m["decimal"] = fact.decimal
 	m["initial_supply"] = fact.initialSupply
 
 	return bsonenc.Marshal(m)
@@ -20,6 +21,7 @@ func (fact RegisterModelFact) MarshalBSON() ([]byte, error) {
 type RegisterModelFactBSONUnmarshaler struct {
 	Symbol        string `bson:"symbol"`
 	Name          string `bson:"name"`
+	Decimal       string `bson:"decimal"`
 	InitialSupply string `bson:"initial_supply"`
 }
 
@@ -33,7 +35,7 @@ func (fact *RegisterModelFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error 
 		return common.DecorateError(err, common.ErrDecodeBson, *fact)
 	}
 
-	if err := fact.unpack(enc, uf.Symbol, uf.Name, uf.InitialSupply); err != nil {
+	if err := fact.unpack(enc, uf.Symbol, uf.Name, uf.Decimal, uf.InitialSupply); err != nil {
 		return common.DecorateError(err, common.ErrDecodeBson, *fact)
 	}
 

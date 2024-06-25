@@ -20,6 +20,7 @@ type RegisterModelFact struct {
 	TokenFact
 	symbol        types.TokenSymbol
 	name          string
+	decimal       common.Big
 	initialSupply common.Big
 }
 
@@ -29,6 +30,7 @@ func NewRegisterModelFact(
 	currency currencytypes.CurrencyID,
 	symbol types.TokenSymbol,
 	name string,
+	decimal common.Big,
 	initialSupply common.Big,
 ) RegisterModelFact {
 	fact := RegisterModelFact{
@@ -37,6 +39,7 @@ func NewRegisterModelFact(
 		),
 		symbol:        symbol,
 		name:          name,
+		decimal:       decimal,
 		initialSupply: initialSupply,
 	}
 	fact.SetHash(fact.GenerateHash())
@@ -50,6 +53,12 @@ func (fact RegisterModelFact) IsValid(b []byte) error {
 
 	if fact.name == "" {
 		return common.ErrFactInvalid.Wrap(common.ErrValueInvalid.Wrap(errors.Errorf("empty symbol")))
+	}
+
+	if !fact.decimal.OverNil() {
+		return common.ErrFactInvalid.Wrap(
+			common.ErrValOOR.Wrap(
+				errors.Errorf("decimal must be bigger than or equal to zero, got %v", fact.decimal)))
 	}
 
 	if !fact.initialSupply.OverNil() {
@@ -83,6 +92,10 @@ func (fact RegisterModelFact) Name() string {
 
 func (fact RegisterModelFact) Symbol() types.TokenSymbol {
 	return fact.symbol
+}
+
+func (fact RegisterModelFact) Decimal() common.Big {
+	return fact.decimal
 }
 
 func (fact RegisterModelFact) InitialSupply() common.Big {

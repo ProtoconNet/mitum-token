@@ -74,7 +74,7 @@ func (t *TestRegisterTokenProcessor) Print(fileName string,
 
 func (t *TestRegisterTokenProcessor) MakeOperation(
 	sender base.Address, privatekey base.Privatekey, contract base.Address,
-	symbol, name string, initialSupply int64, currency types.CurrencyID,
+	symbol, name string, decimal, initialSupply int64, currency types.CurrencyID,
 ) *TestRegisterTokenProcessor {
 	op := NewRegisterModel(
 		NewRegisterModelFact(
@@ -84,6 +84,7 @@ func (t *TestRegisterTokenProcessor) MakeOperation(
 			currency,
 			tokentypes.TokenSymbol(symbol),
 			name,
+			common.NewBig(decimal),
 			common.NewBig(initialSupply),
 		))
 	_ = op.Sign(privatekey, t.NetworkID)

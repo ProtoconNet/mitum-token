@@ -11,19 +11,21 @@ import (
 func (d Design) MarshalBSON() ([]byte, error) {
 	return bsonenc.Marshal(
 		bson.M{
-			"_hint":  d.Hint().String(),
-			"symbol": d.symbol,
-			"name":   d.name,
-			"policy": d.policy,
+			"_hint":   d.Hint().String(),
+			"symbol":  d.symbol,
+			"name":    d.name,
+			"decimal": d.decimal,
+			"policy":  d.policy,
 		},
 	)
 }
 
 type DesignBSONUnmarshaler struct {
-	Hint   string   `bson:"_hint"`
-	Symbol string   `bson:"symbol"`
-	Name   string   `bson:"name"`
-	Policy bson.Raw `bson:"policy"`
+	Hint    string   `bson:"_hint"`
+	Symbol  string   `bson:"symbol"`
+	Name    string   `bson:"name"`
+	Decimal string   `bson:"decimal"`
+	Policy  bson.Raw `bson:"policy"`
 }
 
 func (d *Design) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
@@ -39,5 +41,5 @@ func (d *Design) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 		return e.Wrap(err)
 	}
 
-	return d.unpack(enc, ht, u.Symbol, u.Name, u.Policy)
+	return d.unpack(enc, ht, u.Symbol, u.Name, u.Decimal, u.Policy)
 }
