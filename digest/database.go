@@ -8,6 +8,7 @@ import (
 	"github.com/ProtoconNet/mitum-token/types"
 	mitumbase "github.com/ProtoconNet/mitum2/base"
 	mitumutil "github.com/ProtoconNet/mitum2/util"
+	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -53,7 +54,7 @@ func Token(st *currencydigest.Database, contract string) (*types.Design, error) 
 	return design, nil
 }
 
-func TokenBalance(st *currencydigest.Database, contract, account string) (common.Big, error) {
+func TokenBalance(st *currencydigest.Database, contract, account string) (*common.Big, error) {
 	filter := util.NewBSONFilter("contract", contract)
 	filter = filter.Add("address", account)
 
@@ -78,8 +79,11 @@ func TokenBalance(st *currencydigest.Database, contract, account string) (common
 		},
 		options.FindOne().SetSort(util.NewBSONFilter("height", -1).D()),
 	); err != nil {
-		return common.NilBig, mitumutil.ErrNotFound.Errorf("token balance by contract %s, account %s", contract, account)
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, nil
+		}
+		//return nil, mitumutil.ErrNotFound.Errorf("token balance by contract %s, account %s", contract, account)
 	}
 
-	return amount, nil
+	return &amount, nil
 }
