@@ -82,6 +82,7 @@ func (fact RegisterModelFact) Bytes() []byte {
 		fact.TokenFact.Bytes(),
 		fact.symbol.Bytes(),
 		[]byte(fact.name),
+		fact.decimal.Bytes(),
 		fact.initialSupply.Bytes(),
 	)
 }
