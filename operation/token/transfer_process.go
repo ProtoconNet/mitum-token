@@ -162,10 +162,7 @@ func (opp *TransferProcessor) Process(
 ) {
 	e := util.StringError(ErrStringProcess(*opp))
 
-	fact, ok := op.Fact().(TransferFact)
-	if !ok {
-		return nil, nil, e.Wrap(errors.Errorf(utils.ErrStringTypeCast(TransferFact{}, op.Fact())))
-	}
+	fact, _ := op.Fact().(TransferFact)
 
 	g := state.NewStateKeyGenerator(fact.Contract())
 
@@ -177,16 +174,6 @@ func (opp *TransferProcessor) Process(
 	}
 	if len(v) > 0 {
 		sts = append(sts, v...)
-	}
-
-	st, err := currencystate.ExistsState(g.TokenBalance(fact.Sender()), "token balance", getStateFunc)
-	if err != nil {
-		return nil, ErrStateNotFound("token balance", utils.JoinStringers(fact.Contract(), fact.Sender()), err), nil
-	}
-
-	_, err = state.StateTokenBalanceValue(st)
-	if err != nil {
-		return nil, ErrStateNotFound("token balance value", utils.JoinStringers(fact.Contract(), fact.Sender()), err), nil
 	}
 
 	sts = append(sts, common.NewBaseStateMergeValue(

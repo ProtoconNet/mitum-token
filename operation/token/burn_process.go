@@ -164,12 +164,7 @@ func (opp *BurnProcessor) Process(
 	_ context.Context, op base.Operation, getStateFunc base.GetStateFunc) (
 	[]base.StateMergeValue, base.OperationProcessReasonError, error,
 ) {
-	e := util.StringError(ErrStringProcess(*opp))
-
-	fact, ok := op.Fact().(BurnFact)
-	if !ok {
-		return nil, nil, e.Wrap(errors.Errorf(utils.ErrStringTypeCast(BurnFact{}, op.Fact())))
-	}
+	fact, _ := op.Fact().(BurnFact)
 
 	g := state.NewStateKeyGenerator(fact.Contract())
 
@@ -184,15 +179,8 @@ func (opp *BurnProcessor) Process(
 		sts = append(sts, v...)
 	}
 
-	st, err := currencystate.ExistsState(g.Design(), "design", getStateFunc)
-	if err != nil {
-		return nil, ErrBaseOperationProcess(err, "token design", utils.JoinStringers(fact.Contract())), nil
-	}
-
-	design, err := state.StateDesignValue(st)
-	if err != nil {
-		return nil, ErrBaseOperationProcess(err, "token design value", utils.JoinStringers(fact.Contract())), nil
-	}
+	st, _ := currencystate.ExistsState(g.Design(), "design", getStateFunc)
+	design, _ := state.StateDesignValue(st)
 
 	policy := types.NewPolicy(
 		design.Policy().TotalSupply().Sub(fact.Amount()),

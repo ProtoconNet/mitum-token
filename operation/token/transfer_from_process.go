@@ -231,15 +231,8 @@ func (opp *TransferFromProcessor) Process(
 		sts = append(sts, v...)
 	}
 
-	st, err := currencystate.ExistsState(g.Design(), "design", getStateFunc)
-	if err != nil {
-		return nil, ErrStateNotFound("token design", fact.Contract().String(), err), nil
-	}
-
-	design, err := state.StateDesignValue(st)
-	if err != nil {
-		return nil, ErrStateNotFound("token design value", fact.Contract().String(), err), nil
-	}
+	st, _ := currencystate.ExistsState(g.Design(), "design", getStateFunc)
+	design, _ := state.StateDesignValue(st)
 
 	approveBoxList := design.Policy().ApproveList()
 

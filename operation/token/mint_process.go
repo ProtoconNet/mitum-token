@@ -156,12 +156,7 @@ func (opp *MintProcessor) Process(
 	_ context.Context, op base.Operation, getStateFunc base.GetStateFunc) (
 	[]base.StateMergeValue, base.OperationProcessReasonError, error,
 ) {
-	e := util.StringError(ErrStringProcess(*opp))
-
-	fact, ok := op.Fact().(MintFact)
-	if !ok {
-		return nil, nil, e.Wrap(errors.Errorf(utils.ErrStringTypeCast(MintFact{}, op.Fact())))
-	}
+	fact, _ := op.Fact().(MintFact)
 
 	g := state.NewStateKeyGenerator(fact.Contract())
 
@@ -176,15 +171,8 @@ func (opp *MintProcessor) Process(
 		sts = append(sts, v...)
 	}
 
-	st, err := currencystate.ExistsState(g.Design(), "design", getStateFunc)
-	if err != nil {
-		return nil, ErrBaseOperationProcess(err, "token design not found, %s", fact.Contract().String()), nil
-	}
-
-	design, err := state.StateDesignValue(st)
-	if err != nil {
-		return nil, ErrBaseOperationProcess(err, "token design value not found, %s", fact.Contract().String()), nil
-	}
+	st, _ := currencystate.ExistsState(g.Design(), "design", getStateFunc)
+	design, _ := state.StateDesignValue(st)
 
 	policy := types.NewPolicy(
 		design.Policy().TotalSupply().Add(fact.Amount()),

@@ -168,12 +168,7 @@ func (opp *ApproveProcessor) Process(
 	_ context.Context, op base.Operation, getStateFunc base.GetStateFunc) (
 	[]base.StateMergeValue, base.OperationProcessReasonError, error,
 ) {
-	e := util.StringError(ErrStringProcess(*opp))
-
-	fact, ok := op.Fact().(ApproveFact)
-	if !ok {
-		return nil, nil, e.Wrap(errors.Errorf(utils.ErrStringTypeCast(ApproveFact{}, op.Fact())))
-	}
+	fact, _ := op.Fact().(ApproveFact)
 
 	keyGenerator := state.NewStateKeyGenerator(fact.Contract())
 

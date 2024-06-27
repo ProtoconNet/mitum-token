@@ -128,14 +128,6 @@ func (opp *RegisterModelProcessor) PreProcess(
 				Wrap(common.ErrMServiceE).Errorf("token design for contract account %v", fact.Contract())), nil
 	}
 
-	if fact.InitialSupply().OverZero() {
-		if found, _ := cstate.CheckNotExistsState(g.TokenBalance(ca.Owner()), getStateFunc); found {
-			return ctx, base.NewBaseOperationProcessReasonError(
-				common.ErrMPreProcess.
-					Wrap(common.ErrMServiceE).Errorf("token initial supply for contract account %v", fact.Contract())), nil
-		}
-	}
-
 	if err := cstate.CheckFactSignsByState(fact.Sender(), op.Signs(), getStateFunc); err != nil {
 		return ctx, base.NewBaseOperationProcessReasonError(
 			common.ErrMPreProcess.
