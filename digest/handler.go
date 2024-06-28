@@ -23,8 +23,8 @@ import (
 )
 
 var (
-	HandlerPathToken        = `/token/{contract:.*}`
-	HandlerPathTokenBalance = `/token/{contract:.*}/account/{address:(?i)` + base.REStringAddressString + `}` // revive:disable-line:line-length-limit
+	HandlerPathToken        = `/token/{contract:(?i)` + base.REStringAddressString + `}`
+	HandlerPathTokenBalance = `/token/{contract:(?i)` + base.REStringAddressString + `}/account/{address:(?i)` + base.REStringAddressString + `}` // revive:disable-line:line-length-limit
 )
 
 func init() {
