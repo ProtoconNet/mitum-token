@@ -108,15 +108,11 @@ func (opp *ApproveProcessor) PreProcess(
 				Errorf("%v", cErr)), nil
 	}
 
-	if _, _, aErr, cErr := currencystate.ExistsCAccount(
-		fact.Approved(), "approved", true, false, getStateFunc); aErr != nil {
-		return ctx, base.NewBaseOperationProcessReasonError(
-			common.ErrMPreProcess.
-				Errorf("%v", aErr)), nil
-	} else if cErr != nil {
+	if _, _, _, cErr := currencystate.ExistsCAccount(
+		fact.Approved(), "approved", true, false, getStateFunc); cErr != nil {
 		return ctx, base.NewBaseOperationProcessReasonError(
 			common.ErrMPreProcess.Wrap(common.ErrMCAccountNA).
-				Errorf("%v", cErr)), nil
+				Errorf("%v: approved %v is contract account", cErr, fact.Approved())), nil
 	}
 
 	keyGenerator := state.NewStateKeyGenerator(fact.Contract())
@@ -173,6 +169,13 @@ func (opp *ApproveProcessor) Process(
 	keyGenerator := state.NewStateKeyGenerator(fact.Contract())
 
 	var sts []base.StateMergeValue
+
+	smv, err := currencystate.CreateNotExistAccount(fact.Approved(), getStateFunc)
+	if err != nil {
+		return nil, base.NewBaseOperationProcessReasonError("%w", err), nil
+	} else if smv != nil {
+		sts = append(sts, smv)
+	}
 
 	v, baseErr, err := calculateCurrencyFee(fact.TokenFact, getStateFunc)
 	if baseErr != nil || err != nil {

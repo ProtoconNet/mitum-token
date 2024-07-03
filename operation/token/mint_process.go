@@ -115,16 +115,23 @@ func (opp *MintProcessor) PreProcess(
 				Errorf("%v", err)), nil
 	}
 
-	if _, _, aErr, cErr := currencystate.ExistsCAccount(
-		fact.Receiver(), "receiver", true, false, getStateFunc); aErr != nil {
-		return ctx, base.NewBaseOperationProcessReasonError(
-			common.ErrMPreProcess.
-				Errorf("%v", aErr)), nil
-	} else if cErr != nil {
+	if _, _, _, cErr := currencystate.ExistsCAccount(
+		fact.Receiver(), "receiver", true, false, getStateFunc); cErr != nil {
 		return ctx, base.NewBaseOperationProcessReasonError(
 			common.ErrMPreProcess.Wrap(common.ErrMCAccountNA).
 				Errorf("%v: receiver %v is contract account", cErr, fact.Receiver())), nil
 	}
+
+	//if _, _, aErr, cErr := currencystate.ExistsCAccount(
+	//	fact.Receiver(), "receiver", true, false, getStateFunc); aErr != nil {
+	//	return ctx, base.NewBaseOperationProcessReasonError(
+	//		common.ErrMPreProcess.
+	//			Errorf("%v", aErr)), nil
+	//} else if cErr != nil {
+	//	return ctx, base.NewBaseOperationProcessReasonError(
+	//		common.ErrMPreProcess.Wrap(common.ErrMCAccountNA).
+	//			Errorf("%v: receiver %v is contract account", cErr, fact.Receiver())), nil
+	//}
 
 	keyGenerator := state.NewStateKeyGenerator(fact.Contract())
 
@@ -191,6 +198,13 @@ func (opp *MintProcessor) Process(
 		g.Design(),
 		state.NewDesignStateValue(de),
 	))
+
+	smv, err := currencystate.CreateNotExistAccount(fact.Receiver(), getStateFunc)
+	if err != nil {
+		return nil, base.NewBaseOperationProcessReasonError("%w", err), nil
+	} else if smv != nil {
+		sts = append(sts, smv)
+	}
 
 	k := g.TokenBalance(fact.Receiver())
 	switch st, found, err := getStateFunc(k); {

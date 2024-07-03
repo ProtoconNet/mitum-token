@@ -9,7 +9,6 @@ import (
 
 	"github.com/ProtoconNet/mitum-currency/v3/common"
 	currencystate "github.com/ProtoconNet/mitum-currency/v3/state"
-	"github.com/ProtoconNet/mitum-currency/v3/state/currency"
 	currencytypes "github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum-token/state"
 	"github.com/ProtoconNet/mitum2/base"
@@ -105,11 +104,7 @@ func (opp *TransferProcessor) PreProcess(
 				Errorf("%v", cErr)), nil
 	}
 
-	if _, _, aErr, cErr := currencystate.ExistsCAccount(fact.Receiver(), "receiver", true, false, getStateFunc); aErr != nil {
-		return ctx, base.NewBaseOperationProcessReasonError(
-			common.ErrMPreProcess.
-				Errorf("%v", aErr)), nil
-	} else if cErr != nil {
+	if _, _, _, cErr := currencystate.ExistsCAccount(fact.Receiver(), "receiver", true, false, getStateFunc); cErr != nil {
 		return ctx, base.NewBaseOperationProcessReasonError(
 			common.ErrMPreProcess.Wrap(common.ErrMCAccountNA).
 				Errorf("%v: receiver %v is contract account", cErr, fact.Receiver())), nil
@@ -160,8 +155,6 @@ func (opp *TransferProcessor) Process(
 	_ context.Context, op base.Operation, getStateFunc base.GetStateFunc) (
 	[]base.StateMergeValue, base.OperationProcessReasonError, error,
 ) {
-	e := util.StringError(ErrStringProcess(*opp))
-
 	fact, _ := op.Fact().(TransferFact)
 
 	g := state.NewStateKeyGenerator(fact.Contract())
@@ -184,23 +177,30 @@ func (opp *TransferProcessor) Process(
 		},
 	))
 
-	k := currency.AccountStateKey(fact.Receiver())
-	switch _, found, err := getStateFunc(k); {
-	case err != nil:
-		return nil, nil, e.Wrap(err)
-	case !found:
-		nilKys, err := currencytypes.NewNilAccountKeysFromAddress(fact.Receiver())
-		if err != nil {
-			return nil, ErrBaseOperationProcess(e.Wrap(err), "failed to create AccountKeys instance for %v", fact.Receiver().String()), nil
-		}
-		acc, err := currencytypes.NewAccount(fact.Receiver(), nilKys)
-		if err != nil {
-			return nil, ErrBaseOperationProcess(err, "failed to create Account instance for %v", fact.Receiver().String()), nil
-		}
-
-		stv := currencystate.NewStateMergeValue(k, currency.NewAccountStateValue(acc))
-		sts = append(sts, stv)
+	smv, err := currencystate.CreateNotExistAccount(fact.Receiver(), getStateFunc)
+	if err != nil {
+		return nil, base.NewBaseOperationProcessReasonError("%w", err), nil
+	} else if smv != nil {
+		sts = append(sts, smv)
 	}
+
+	//k := currency.AccountStateKey(fact.Receiver())
+	//switch _, found, err := getStateFunc(k); {
+	//case err != nil:
+	//	return nil, nil, e.Wrap(err)
+	//case !found:
+	//	nilKys, err := currencytypes.NewNilAccountKeysFromAddress(fact.Receiver())
+	//	if err != nil {
+	//		return nil, ErrBaseOperationProcess(e.Wrap(err), "failed to create AccountKeys instance for %v", fact.Receiver().String()), nil
+	//	}
+	//	acc, err := currencytypes.NewAccount(fact.Receiver(), nilKys)
+	//	if err != nil {
+	//		return nil, ErrBaseOperationProcess(err, "failed to create Account instance for %v", fact.Receiver().String()), nil
+	//	}
+	//
+	//	stv := currencystate.NewStateMergeValue(k, currency.NewAccountStateValue(acc))
+	//	sts = append(sts, stv)
+	//}
 
 	switch st, found, err := getStateFunc(g.TokenBalance(fact.Receiver())); {
 	case err != nil:
