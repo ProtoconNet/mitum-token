@@ -115,13 +115,14 @@ func (hd *Handlers) Handler() http.Handler {
 }
 
 func (hd *Handlers) setHandlers() {
-	_ = hd.setHandler(HandlerPathTokenBalance, hd.handleTokenBalance, true).
+	get := 1000
+	_ = hd.setHandler(HandlerPathTokenBalance, hd.handleTokenBalance, true, get, get).
 		Methods(http.MethodOptions, "GET")
-	_ = hd.setHandler(HandlerPathToken, hd.handleToken, true).
+	_ = hd.setHandler(HandlerPathToken, hd.handleToken, true, get, get).
 		Methods(http.MethodOptions, "GET")
 }
 
-func (hd *Handlers) setHandler(prefix string, h network.HTTPHandlerFunc, useCache bool) *mux.Route {
+func (hd *Handlers) setHandler(prefix string, h network.HTTPHandlerFunc, useCache bool, rps, burst int) *mux.Route {
 	var handler http.Handler
 	if !useCache {
 		handler = http.HandlerFunc(h)
@@ -145,14 +146,18 @@ func (hd *Handlers) setHandler(prefix string, h network.HTTPHandlerFunc, useCach
 		route = hd.router.Name(name)
 	}
 
-	// if rules, found := hd.rateLimit[prefix]; found {
-	// 	handler = process.NewRateLimitMiddleware(
-	// 		process.NewRateLimit(rules, limiter.Rate{Limit: -1}), // NOTE by default, unlimited
-	// 		hd.rateLimitStore,
-	// 	).Middleware(handler)
+	handler = currencydigest.RateLimiter(rps, burst)(handler)
 
-	// 	hd.Log().Debug().Str("prefix", prefix).Msg("ratelimit middleware attached")
-	// }
+	/*
+		if rules, found := hd.rateLimit[prefix]; found {
+			handler = process.NewRateLimitMiddleware(
+				process.NewRateLimit(rules, limiter.Rate{Limit: -1}), // NOTE by default, unlimited
+				hd.rateLimitStore,
+			).Middleware(handler)
+
+			hd.Log().Debug().Str("prefix", prefix).Msg("ratelimit middleware attached")
+		}
+	*/
 
 	route = route.
 		Path(prefix).
