@@ -2,14 +2,11 @@ package digest
 
 import (
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/ProtoconNet/mitum-currency/v3/common"
 	currencydigest "github.com/ProtoconNet/mitum-currency/v3/digest"
 	"github.com/ProtoconNet/mitum-token/types"
-	"github.com/gorilla/mux"
-	"github.com/pkg/errors"
 )
 
 func (hd *Handlers) handleToken(w http.ResponseWriter, r *http.Request) {
@@ -18,7 +15,7 @@ func (hd *Handlers) handleToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	contract, err, status := parseRequest(w, r, "contract")
+	contract, err, status := currencydigest.ParseRequest(w, r, "contract")
 	if err != nil {
 		currencydigest.HTTP2ProblemWithError(w, err, status)
 
@@ -67,14 +64,14 @@ func (hd *Handlers) handleTokenBalance(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	contract, err, status := parseRequest(w, r, "contract")
+	contract, err, status := currencydigest.ParseRequest(w, r, "contract")
 	if err != nil {
 		currencydigest.HTTP2ProblemWithError(w, err, status)
 
 		return
 	}
 
-	account, err, status := parseRequest(w, r, "address")
+	account, err, status := currencydigest.ParseRequest(w, r, "address")
 	if err != nil {
 		currencydigest.HTTP2ProblemWithError(w, err, status)
 
@@ -123,17 +120,4 @@ func (hd *Handlers) buildTokenBalanceHal(contract, account string, amount *commo
 	}
 
 	return hal, nil
-}
-
-func parseRequest(_ http.ResponseWriter, r *http.Request, v string) (string, error, int) {
-	s, found := mux.Vars(r)[v]
-	if !found {
-		return "", errors.Errorf("empty %s", v), http.StatusNotFound
-	}
-
-	s = strings.TrimSpace(s)
-	if len(s) < 1 {
-		return "", errors.Errorf("empty %s", v), http.StatusBadRequest
-	}
-	return s, nil, http.StatusOK
 }
