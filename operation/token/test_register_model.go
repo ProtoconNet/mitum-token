@@ -3,8 +3,8 @@ package token
 import (
 	"github.com/ProtoconNet/mitum-currency/v3/common"
 	"github.com/ProtoconNet/mitum-currency/v3/operation/test"
-	"github.com/ProtoconNet/mitum-currency/v3/types"
-	tokentypes "github.com/ProtoconNet/mitum-token/types"
+	ctypes "github.com/ProtoconNet/mitum-currency/v3/types"
+	"github.com/ProtoconNet/mitum-token/types"
 	"github.com/ProtoconNet/mitum2/base"
 )
 
@@ -27,7 +27,7 @@ func (t *TestRegisterTokenProcessor) Create() *TestRegisterTokenProcessor {
 }
 
 func (t *TestRegisterTokenProcessor) SetCurrency(
-	cid string, am int64, addr base.Address, target []types.CurrencyID, instate bool,
+	cid string, am int64, addr base.Address, target []ctypes.CurrencyID, instate bool,
 ) *TestRegisterTokenProcessor {
 	t.BaseTestOperationProcessorNoItem.SetCurrency(cid, am, addr, target, instate)
 
@@ -35,7 +35,7 @@ func (t *TestRegisterTokenProcessor) SetCurrency(
 }
 
 func (t *TestRegisterTokenProcessor) SetAmount(
-	am int64, cid types.CurrencyID, target []types.Amount,
+	am int64, cid ctypes.CurrencyID, target []ctypes.Amount,
 ) *TestRegisterTokenProcessor {
 	t.BaseTestOperationProcessorNoItem.SetAmount(am, cid, target)
 
@@ -43,7 +43,7 @@ func (t *TestRegisterTokenProcessor) SetAmount(
 }
 
 func (t *TestRegisterTokenProcessor) SetContractAccount(
-	owner base.Address, priv string, amount int64, cid types.CurrencyID, target []test.Account, inState bool,
+	owner base.Address, priv string, amount int64, cid ctypes.CurrencyID, target []test.Account, inState bool,
 ) *TestRegisterTokenProcessor {
 	t.BaseTestOperationProcessorNoItem.SetContractAccount(owner, priv, amount, cid, target, inState)
 
@@ -51,7 +51,7 @@ func (t *TestRegisterTokenProcessor) SetContractAccount(
 }
 
 func (t *TestRegisterTokenProcessor) SetAccount(
-	priv string, amount int64, cid types.CurrencyID, target []test.Account, inState bool,
+	priv string, amount int64, cid ctypes.CurrencyID, target []test.Account, inState bool,
 ) *TestRegisterTokenProcessor {
 	t.BaseTestOperationProcessorNoItem.SetAccount(priv, amount, cid, target, inState)
 
@@ -74,7 +74,7 @@ func (t *TestRegisterTokenProcessor) Print(fileName string,
 
 func (t *TestRegisterTokenProcessor) MakeOperation(
 	sender base.Address, privatekey base.Privatekey, contract base.Address,
-	symbol, name string, decimal, initialSupply int64, currency types.CurrencyID,
+	symbol, name string, decimal, initialSupply int64, currency ctypes.CurrencyID,
 ) *TestRegisterTokenProcessor {
 	op := NewRegisterModel(
 		NewRegisterModelFact(
@@ -82,7 +82,7 @@ func (t *TestRegisterTokenProcessor) MakeOperation(
 			sender,
 			contract,
 			currency,
-			tokentypes.TokenSymbol(symbol),
+			types.TokenSymbol(symbol),
 			name,
 			common.NewBig(decimal),
 			common.NewBig(initialSupply),

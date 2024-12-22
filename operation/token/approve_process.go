@@ -4,14 +4,13 @@ import (
 	"context"
 	"fmt"
 	"github.com/ProtoconNet/mitum-currency/v3/common"
-	statecurrency "github.com/ProtoconNet/mitum-currency/v3/state/currency"
 	"sync"
 
 	"github.com/ProtoconNet/mitum-token/types"
 	"github.com/ProtoconNet/mitum-token/utils"
 
-	currencystate "github.com/ProtoconNet/mitum-currency/v3/state"
-	currencytypes "github.com/ProtoconNet/mitum-currency/v3/types"
+	cstate "github.com/ProtoconNet/mitum-currency/v3/state"
+	ctypes "github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum-token/state"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
@@ -34,7 +33,7 @@ type ApproveProcessor struct {
 	*base.BaseOperationProcessor
 }
 
-func NewApproveProcessor() currencytypes.GetNewProcessor {
+func NewApproveProcessor() ctypes.GetNewProcessor {
 	return func(
 		height base.Height,
 		getStateFunc base.GetStateFunc,
@@ -79,36 +78,7 @@ func (opp *ApproveProcessor) PreProcess(
 				Errorf("%v", err)), nil
 	}
 
-	if err := currencystate.CheckExistsState(
-		statecurrency.DesignStateKey(fact.Currency()), getStateFunc); err != nil {
-		return ctx, base.NewBaseOperationProcessReasonError(
-			common.ErrMPreProcess.Wrap(common.ErrMCurrencyNF).Errorf("currency id, %v", fact.Currency())), nil
-	}
-
-	if _, _, aErr, cErr := currencystate.ExistsCAccount(
-		fact.Sender(), "sender", true, false, getStateFunc); aErr != nil {
-		return ctx, base.NewBaseOperationProcessReasonError(
-			common.ErrMPreProcess.
-				Errorf("%v", aErr)), nil
-	} else if cErr != nil {
-		return ctx, base.NewBaseOperationProcessReasonError(
-			common.ErrMPreProcess.Wrap(common.ErrMCAccountNA).
-				Errorf("%v", cErr)), nil
-	}
-
-	_, _, aErr, cErr := currencystate.ExistsCAccount(
-		fact.Contract(), "contract", true, true, getStateFunc)
-	if aErr != nil {
-		return ctx, base.NewBaseOperationProcessReasonError(
-			common.ErrMPreProcess.
-				Errorf("%v", aErr)), nil
-	} else if cErr != nil {
-		return ctx, base.NewBaseOperationProcessReasonError(
-			common.ErrMPreProcess.
-				Errorf("%v", cErr)), nil
-	}
-
-	if _, _, _, cErr := currencystate.ExistsCAccount(
+	if _, _, _, cErr := cstate.ExistsCAccount(
 		fact.Approved(), "approved", true, false, getStateFunc); cErr != nil {
 		return ctx, base.NewBaseOperationProcessReasonError(
 			common.ErrMPreProcess.Wrap(common.ErrMCAccountNA).
@@ -117,7 +87,7 @@ func (opp *ApproveProcessor) PreProcess(
 
 	keyGenerator := state.NewStateKeyGenerator(fact.Contract())
 
-	if st, err := currencystate.ExistsState(
+	if st, err := cstate.ExistsState(
 		keyGenerator.Design(), "design", getStateFunc); err != nil {
 		return nil, base.NewBaseOperationProcessReasonError(
 			common.ErrMPreProcess.
@@ -144,17 +114,10 @@ func (opp *ApproveProcessor) PreProcess(
 						fact.Approved())), nil
 		}
 	}
-	if err := currencystate.CheckExistsState(keyGenerator.TokenBalance(fact.Sender()), getStateFunc); err != nil {
+	if err := cstate.CheckExistsState(keyGenerator.TokenBalance(fact.Sender()), getStateFunc); err != nil {
 		return nil, base.NewBaseOperationProcessReasonError(
 			common.ErrMPreProcess.Wrap(common.ErrMStateNF).
 				Errorf("token balance for sender %v in contract account %v", fact.Sender(), fact.Contract())), nil
-	}
-
-	if err := currencystate.CheckFactSignsByState(fact.Sender(), op.Signs(), getStateFunc); err != nil {
-		return ctx, base.NewBaseOperationProcessReasonError(
-			common.ErrMPreProcess.
-				Wrap(common.ErrMSignInvalid).
-				Errorf("%v", err)), nil
 	}
 
 	return ctx, nil, nil
@@ -170,23 +133,14 @@ func (opp *ApproveProcessor) Process(
 
 	var sts []base.StateMergeValue
 
-	smv, err := currencystate.CreateNotExistAccount(fact.Approved(), getStateFunc)
+	smv, err := cstate.CreateNotExistAccount(fact.Approved(), getStateFunc)
 	if err != nil {
 		return nil, base.NewBaseOperationProcessReasonError("%w", err), nil
 	} else if smv != nil {
 		sts = append(sts, smv)
 	}
 
-	v, baseErr, err := calculateCurrencyFee(fact.TokenFact, getStateFunc)
-	if baseErr != nil || err != nil {
-		return nil, baseErr, err
-	}
-
-	if len(v) > 0 {
-		sts = append(sts, v...)
-	}
-
-	st, _ := currencystate.ExistsState(keyGenerator.Design(), "design", getStateFunc)
+	st, _ := cstate.ExistsState(keyGenerator.Design(), "design", getStateFunc)
 	design, _ := state.StateDesignValue(st)
 	apb := design.Policy().GetApproveBox(fact.Sender())
 	if apb == nil {
@@ -212,7 +166,7 @@ func (opp *ApproveProcessor) Process(
 	if err := de.IsValid(nil); err != nil {
 		return nil, ErrInvalid(de, err), nil
 	}
-	sts = append(sts, currencystate.NewStateMergeValue(
+	sts = append(sts, cstate.NewStateMergeValue(
 		keyGenerator.Design(),
 		state.NewDesignStateValue(de),
 	))

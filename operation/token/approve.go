@@ -2,7 +2,8 @@ package token
 
 import (
 	"github.com/ProtoconNet/mitum-currency/v3/common"
-	currencytypes "github.com/ProtoconNet/mitum-currency/v3/types"
+	"github.com/ProtoconNet/mitum-currency/v3/operation/extras"
+	ctypes "github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
@@ -24,7 +25,7 @@ type ApproveFact struct {
 func NewApproveFact(
 	token []byte,
 	sender, contract base.Address,
-	currency currencytypes.CurrencyID,
+	currency ctypes.CurrencyID,
 	approved base.Address,
 	amount common.Big,
 ) ApproveFact {
@@ -102,10 +103,16 @@ func (fact ApproveFact) Addresses() ([]base.Address, error) {
 	return as, nil
 }
 
+func (fact ApproveFact) ActiveContract() []base.Address {
+	return []base.Address{fact.contract}
+}
+
 type Approve struct {
-	common.BaseOperation
+	extras.ExtendedOperation
 }
 
 func NewApprove(fact ApproveFact) Approve {
-	return Approve{BaseOperation: common.NewBaseOperation(ApproveHint, fact)}
+	return Approve{
+		ExtendedOperation: extras.NewExtendedOperation(ApproveHint, fact),
+	}
 }

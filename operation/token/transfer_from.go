@@ -2,7 +2,8 @@ package token
 
 import (
 	"github.com/ProtoconNet/mitum-currency/v3/common"
-	currencytypes "github.com/ProtoconNet/mitum-currency/v3/types"
+	"github.com/ProtoconNet/mitum-currency/v3/operation/extras"
+	ctypes "github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
@@ -25,7 +26,7 @@ type TransferFromFact struct {
 func NewTransferFromFact(
 	token []byte,
 	sender, contract base.Address,
-	currency currencytypes.CurrencyID,
+	currency ctypes.CurrencyID,
 	receiver, target base.Address,
 	amount common.Big,
 ) TransferFromFact {
@@ -116,10 +117,16 @@ func (fact TransferFromFact) Addresses() ([]base.Address, error) {
 	return as, nil
 }
 
+func (fact TransferFromFact) ActiveContract() []base.Address {
+	return []base.Address{fact.contract}
+}
+
 type TransferFrom struct {
-	common.BaseOperation
+	extras.ExtendedOperation
 }
 
 func NewTransferFrom(fact TransferFromFact) TransferFrom {
-	return TransferFrom{BaseOperation: common.NewBaseOperation(TransferFromHint, fact)}
+	return TransferFrom{
+		ExtendedOperation: extras.NewExtendedOperation(TransferFromHint, fact),
+	}
 }

@@ -9,8 +9,8 @@ import (
 	"github.com/ProtoconNet/mitum-token/utils"
 
 	"github.com/ProtoconNet/mitum-currency/v3/common"
-	currencystate "github.com/ProtoconNet/mitum-currency/v3/state"
-	currencytypes "github.com/ProtoconNet/mitum-currency/v3/types"
+	cstate "github.com/ProtoconNet/mitum-currency/v3/state"
+	ctypes "github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum-token/state"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
@@ -33,7 +33,7 @@ type TransferFromProcessor struct {
 	*base.BaseOperationProcessor
 }
 
-func NewTransferFromProcessor() currencytypes.GetNewProcessor {
+func NewTransferFromProcessor() ctypes.GetNewProcessor {
 	return func(
 		height base.Height,
 		getStateFunc base.GetStateFunc,
@@ -78,43 +78,20 @@ func (opp *TransferFromProcessor) PreProcess(
 				Errorf("%v", err)), nil
 	}
 
-	_, err := currencystate.ExistsCurrencyPolicy(fact.Currency(), getStateFunc)
+	_, err := cstate.ExistsCurrencyPolicy(fact.Currency(), getStateFunc)
 	if err != nil {
 		return nil, base.NewBaseOperationProcessReasonError(
 			common.ErrMPreProcess.Wrap(common.ErrMCurrencyNF).Errorf("currency id %v", fact.Currency())), nil
 	}
 
-	if _, _, aErr, cErr := currencystate.ExistsCAccount(
-		fact.Sender(), "sender", true, false, getStateFunc); aErr != nil {
-		return ctx, base.NewBaseOperationProcessReasonError(
-			common.ErrMPreProcess.
-				Errorf("%v", aErr)), nil
-	} else if cErr != nil {
-		return ctx, base.NewBaseOperationProcessReasonError(
-			common.ErrMPreProcess.Wrap(common.ErrMCAccountNA).
-				Errorf("%v: sender %v is contract account", cErr, fact.Sender())), nil
-	}
-
-	_, _, aErr, cErr := currencystate.ExistsCAccount(
-		fact.Contract(), "contract", true, true, getStateFunc)
-	if aErr != nil {
-		return ctx, base.NewBaseOperationProcessReasonError(
-			common.ErrMPreProcess.
-				Errorf("%v", aErr)), nil
-	} else if cErr != nil {
-		return ctx, base.NewBaseOperationProcessReasonError(
-			common.ErrMPreProcess.
-				Errorf("%v", cErr)), nil
-	}
-
-	if _, _, _, cErr := currencystate.ExistsCAccount(
+	if _, _, _, cErr := cstate.ExistsCAccount(
 		fact.Receiver(), "receiver", true, false, getStateFunc); cErr != nil {
 		return ctx, base.NewBaseOperationProcessReasonError(
 			common.ErrMPreProcess.Wrap(common.ErrMCAccountNA).
 				Errorf("%v: receiver %v is contract account", cErr, fact.Receiver())), nil
 	}
 
-	if _, _, aErr, cErr := currencystate.ExistsCAccount(
+	if _, _, aErr, cErr := cstate.ExistsCAccount(
 		fact.Target(), "target", true, false, getStateFunc); aErr != nil {
 		return ctx, base.NewBaseOperationProcessReasonError(
 			common.ErrMPreProcess.
@@ -127,7 +104,7 @@ func (opp *TransferFromProcessor) PreProcess(
 
 	g := state.NewStateKeyGenerator(fact.Contract())
 
-	st, err := currencystate.ExistsState(g.Design(), "design", getStateFunc)
+	st, err := cstate.ExistsState(g.Design(), "design", getStateFunc)
 	if err != nil {
 		return nil, base.NewBaseOperationProcessReasonError(
 			common.ErrMPreProcess.
@@ -175,7 +152,7 @@ func (opp *TransferFromProcessor) PreProcess(
 					fact.Sender(), fact.Contract(), aprInfo.Amount(), fact.Amount())), nil
 	}
 
-	st, err = currencystate.ExistsState(g.TokenBalance(fact.Target()), "token balance", getStateFunc)
+	st, err = cstate.ExistsState(g.TokenBalance(fact.Target()), "token balance", getStateFunc)
 	if err != nil {
 		return nil, base.NewBaseOperationProcessReasonError(
 			common.ErrMPreProcess.Wrap(common.ErrMStateNF).
@@ -196,13 +173,6 @@ func (opp *TransferFromProcessor) PreProcess(
 					fact.Target(), fact.Contract(), tb, fact.Amount())), nil
 	}
 
-	if err := currencystate.CheckFactSignsByState(fact.Sender(), op.Signs(), getStateFunc); err != nil {
-		return ctx, base.NewBaseOperationProcessReasonError(
-			common.ErrMPreProcess.
-				Wrap(common.ErrMSignInvalid).
-				Errorf("%v", err)), nil
-	}
-
 	return ctx, nil, nil
 }
 
@@ -218,15 +188,7 @@ func (opp *TransferFromProcessor) Process(
 
 	var sts []base.StateMergeValue
 
-	v, baseErr, err := calculateCurrencyFee(fact.TokenFact, getStateFunc)
-	if baseErr != nil || err != nil {
-		return nil, baseErr, err
-	}
-	if len(v) > 0 {
-		sts = append(sts, v...)
-	}
-
-	st, _ := currencystate.ExistsState(g.Design(), "design", getStateFunc)
+	st, _ := cstate.ExistsState(g.Design(), "design", getStateFunc)
 	design, _ := state.StateDesignValue(st)
 
 	approveBoxList := design.Policy().ApproveList()
@@ -263,12 +225,12 @@ func (opp *TransferFromProcessor) Process(
 		return nil, ErrInvalid(de, err), nil
 	}
 
-	sts = append(sts, currencystate.NewStateMergeValue(
+	sts = append(sts, cstate.NewStateMergeValue(
 		g.Design(),
 		state.NewDesignStateValue(de),
 	))
 
-	st, err = currencystate.ExistsState(g.TokenBalance(fact.Target()), "token balance", getStateFunc)
+	st, err := cstate.ExistsState(g.TokenBalance(fact.Target()), "token balance", getStateFunc)
 	if err != nil {
 		return nil, ErrStateNotFound("token balance", utils.JoinStringers(fact.Contract(), fact.Target()), err), nil
 	}
@@ -286,30 +248,12 @@ func (opp *TransferFromProcessor) Process(
 		},
 	))
 
-	smv, err := currencystate.CreateNotExistAccount(fact.Receiver(), getStateFunc)
+	smv, err := cstate.CreateNotExistAccount(fact.Receiver(), getStateFunc)
 	if err != nil {
 		return nil, base.NewBaseOperationProcessReasonError("%w", err), nil
 	} else if smv != nil {
 		sts = append(sts, smv)
 	}
-
-	//k := currency.AccountStateKey(fact.Receiver())
-	//switch _, found, err := getStateFunc(k); {
-	//case err != nil:
-	//	return nil, nil, e.Wrap(err)
-	//case !found:
-	//	nilKys, err := currencytypes.NewNilAccountKeysFromAddress(fact.Receiver())
-	//	if err != nil {
-	//		return nil, ErrBaseOperationProcess(err, "failed to create AccountKeys instance for %v", fact.Receiver().String()), nil
-	//	}
-	//	acc, err := currencytypes.NewAccount(fact.Receiver(), nilKys)
-	//	if err != nil {
-	//		return nil, ErrBaseOperationProcess(err, "failed to create Account instance for %v", fact.Receiver().String()), nil
-	//	}
-	//
-	//	stv := currencystate.NewStateMergeValue(k, currency.NewAccountStateValue(acc))
-	//	sts = append(sts, stv)
-	//}
 
 	switch st, found, err := getStateFunc(g.TokenBalance(fact.Receiver())); {
 	case err != nil:

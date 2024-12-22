@@ -9,8 +9,8 @@ import (
 	"github.com/ProtoconNet/mitum-token/types"
 	"github.com/ProtoconNet/mitum-token/utils"
 
-	currencystate "github.com/ProtoconNet/mitum-currency/v3/state"
-	currencytypes "github.com/ProtoconNet/mitum-currency/v3/types"
+	cstate "github.com/ProtoconNet/mitum-currency/v3/state"
+	ctypes "github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum-token/state"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
@@ -33,7 +33,7 @@ type BurnProcessor struct {
 	*base.BaseOperationProcessor
 }
 
-func NewBurnProcessor() currencytypes.GetNewProcessor {
+func NewBurnProcessor() ctypes.GetNewProcessor {
 	return func(
 		height base.Height,
 		getStateFunc base.GetStateFunc,
@@ -78,58 +78,21 @@ func (opp *BurnProcessor) PreProcess(
 				Errorf("%v", err)), nil
 	}
 
-	_, err := currencystate.ExistsCurrencyPolicy(fact.Currency(), getStateFunc)
-	if err != nil {
-		return nil, base.NewBaseOperationProcessReasonError(
-			common.ErrMPreProcess.Wrap(common.ErrMCurrencyNF).Errorf("currency id %v", fact.Currency())), nil
-	}
-
-	if _, _, aErr, cErr := currencystate.ExistsCAccount(fact.Sender(), "sender", true, false, getStateFunc); aErr != nil {
-		return ctx, base.NewBaseOperationProcessReasonError(
-			common.ErrMPreProcess.
-				Errorf("%v", aErr)), nil
-	} else if cErr != nil {
-		return ctx, base.NewBaseOperationProcessReasonError(
-			common.ErrMPreProcess.Wrap(common.ErrMCAccountNA).
-				Errorf("%v: sender %v is contract account", cErr, fact.Sender())), nil
-	}
-
-	_, _, aErr, cErr := currencystate.ExistsCAccount(fact.Contract(), "contract", true, true, getStateFunc)
-	if aErr != nil {
-		return ctx, base.NewBaseOperationProcessReasonError(
-			common.ErrMPreProcess.
-				Errorf("%v", aErr)), nil
-	} else if cErr != nil {
-		return ctx, base.NewBaseOperationProcessReasonError(
-			common.ErrMPreProcess.
-				Errorf("%v", cErr)), nil
-	}
-
 	if !fact.Sender().Equal(fact.Target()) {
 		return ctx, base.NewBaseOperationProcessReasonError(
 			common.ErrMPreProcess.Wrap(common.ErrMValueInvalid).
 				Errorf("target %v is not token owner in contract account %v", fact.Target(), fact.Contract())), nil
 	}
 
-	if _, _, aErr, cErr := currencystate.ExistsCAccount(fact.Sender(), "target", true, false, getStateFunc); aErr != nil {
-		return ctx, base.NewBaseOperationProcessReasonError(
-			common.ErrMPreProcess.
-				Errorf("%v", aErr)), nil
-	} else if cErr != nil {
-		return ctx, base.NewBaseOperationProcessReasonError(
-			common.ErrMPreProcess.Wrap(common.ErrMCAccountNA).
-				Errorf("%v: target %v is contract account", cErr, fact.Target())), nil
-	}
-
 	g := state.NewStateKeyGenerator(fact.Contract())
 
-	if err := currencystate.CheckExistsState(g.Design(), getStateFunc); err != nil {
+	if err := cstate.CheckExistsState(g.Design(), getStateFunc); err != nil {
 		return nil, base.NewBaseOperationProcessReasonError(
 			common.ErrMPreProcess.Wrap(common.ErrMServiceNF).
 				Errorf("token design for contract account %v", fact.Contract())), nil
 	}
 
-	st, err := currencystate.ExistsState(g.TokenBalance(fact.Target()), "token balance", getStateFunc)
+	st, err := cstate.ExistsState(g.TokenBalance(fact.Target()), "token balance", getStateFunc)
 	if err != nil {
 		return nil, base.NewBaseOperationProcessReasonError(
 			common.ErrMPreProcess.Wrap(common.ErrMStateNF).
@@ -150,13 +113,6 @@ func (opp *BurnProcessor) PreProcess(
 					fact.Target(), fact.Contract(), tb, fact.Amount())), nil
 	}
 
-	if err := currencystate.CheckFactSignsByState(fact.Sender(), op.Signs(), getStateFunc); err != nil {
-		return ctx, base.NewBaseOperationProcessReasonError(
-			common.ErrMPreProcess.
-				Wrap(common.ErrMSignInvalid).
-				Errorf("%v", err)), nil
-	}
-
 	return ctx, nil, nil
 }
 
@@ -170,16 +126,7 @@ func (opp *BurnProcessor) Process(
 
 	var sts []base.StateMergeValue
 
-	v, baseErr, err := calculateCurrencyFee(fact.TokenFact, getStateFunc)
-	if baseErr != nil || err != nil {
-		return nil, baseErr, err
-	}
-
-	if len(v) > 0 {
-		sts = append(sts, v...)
-	}
-
-	st, _ := currencystate.ExistsState(g.Design(), "design", getStateFunc)
+	st, _ := cstate.ExistsState(g.Design(), "design", getStateFunc)
 	design, _ := state.StateDesignValue(st)
 
 	policy := types.NewPolicy(
@@ -195,12 +142,12 @@ func (opp *BurnProcessor) Process(
 		return nil, ErrInvalid(de, err), nil
 	}
 
-	sts = append(sts, currencystate.NewStateMergeValue(
+	sts = append(sts, cstate.NewStateMergeValue(
 		g.Design(),
 		state.NewDesignStateValue(de),
 	))
 
-	st, err = currencystate.ExistsState(g.TokenBalance(fact.Target()), "token balance", getStateFunc)
+	st, err := cstate.ExistsState(g.TokenBalance(fact.Target()), "token balance", getStateFunc)
 	if err != nil {
 		return nil, ErrBaseOperationProcess(err, "token balance not found, %s, %s", fact.Contract(), fact.Target()), nil
 	}

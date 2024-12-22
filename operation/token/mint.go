@@ -2,7 +2,8 @@ package token
 
 import (
 	"github.com/ProtoconNet/mitum-currency/v3/common"
-	currencytypes "github.com/ProtoconNet/mitum-currency/v3/types"
+	"github.com/ProtoconNet/mitum-currency/v3/operation/extras"
+	ctypes "github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
@@ -24,7 +25,7 @@ type MintFact struct {
 func NewMintFact(
 	token []byte,
 	sender, contract base.Address,
-	currency currencytypes.CurrencyID,
+	currency ctypes.CurrencyID,
 	receiver base.Address,
 	amount common.Big,
 ) MintFact {
@@ -92,10 +93,16 @@ func (fact MintFact) Addresses() ([]base.Address, error) {
 	return as, nil
 }
 
+func (fact MintFact) ActiveContractOwnerHandlerOnly() [][2]base.Address {
+	return [][2]base.Address{{fact.contract, fact.sender}}
+}
+
 type Mint struct {
-	common.BaseOperation
+	extras.ExtendedOperation
 }
 
 func NewMint(fact MintFact) Mint {
-	return Mint{BaseOperation: common.NewBaseOperation(MintHint, fact)}
+	return Mint{
+		ExtendedOperation: extras.NewExtendedOperation(MintHint, fact),
+	}
 }
