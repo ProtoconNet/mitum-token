@@ -66,6 +66,6 @@ func StateDesignValue(st base.State) (*types.Design, error) {
 	return &s.design, nil
 }
 
-func StateKeyDesign(contract base.Address) string {
+func StateKeyDesign(contract string) string {
 	return fmt.Sprintf("%s:%s", StateKeyTokenPrefix(contract), DesignSuffix)
 }

@@ -85,7 +85,7 @@ func (opp *MintProcessor) PreProcess(
 				Errorf("%v: receiver %v is contract account", cErr, fact.Receiver())), nil
 	}
 
-	keyGenerator := state.NewStateKeyGenerator(fact.Contract())
+	keyGenerator := state.NewStateKeyGenerator(fact.Contract().String())
 
 	if st, err := cstate.ExistsState(keyGenerator.Design(), "design", getStateFunc); err != nil {
 		return nil, base.NewBaseOperationProcessReasonError(
@@ -110,7 +110,7 @@ func (opp *MintProcessor) Process(
 ) {
 	fact, _ := op.Fact().(MintFact)
 
-	g := state.NewStateKeyGenerator(fact.Contract())
+	g := state.NewStateKeyGenerator(fact.Contract().String())
 
 	var sts []base.StateMergeValue
 
@@ -142,7 +142,7 @@ func (opp *MintProcessor) Process(
 		sts = append(sts, smv)
 	}
 
-	k := g.TokenBalance(fact.Receiver())
+	k := g.TokenBalance(fact.Receiver().String())
 	switch st, found, err := getStateFunc(k); {
 	case err != nil:
 		return nil, ErrBaseOperationProcess(err, "failed to check token balance, %s, %s", fact.Contract(), fact.Receiver()), nil

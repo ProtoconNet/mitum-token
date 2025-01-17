@@ -84,7 +84,7 @@ func (opp *BurnProcessor) PreProcess(
 				Errorf("target %v is not token owner in contract account %v", fact.Target(), fact.Contract())), nil
 	}
 
-	g := state.NewStateKeyGenerator(fact.Contract())
+	g := state.NewStateKeyGenerator(fact.Contract().String())
 
 	if err := cstate.CheckExistsState(g.Design(), getStateFunc); err != nil {
 		return nil, base.NewBaseOperationProcessReasonError(
@@ -92,7 +92,7 @@ func (opp *BurnProcessor) PreProcess(
 				Errorf("token design for contract account %v", fact.Contract())), nil
 	}
 
-	st, err := cstate.ExistsState(g.TokenBalance(fact.Target()), "token balance", getStateFunc)
+	st, err := cstate.ExistsState(g.TokenBalance(fact.Target().String()), "token balance", getStateFunc)
 	if err != nil {
 		return nil, base.NewBaseOperationProcessReasonError(
 			common.ErrMPreProcess.Wrap(common.ErrMStateNF).
@@ -122,7 +122,7 @@ func (opp *BurnProcessor) Process(
 ) {
 	fact, _ := op.Fact().(BurnFact)
 
-	g := state.NewStateKeyGenerator(fact.Contract())
+	g := state.NewStateKeyGenerator(fact.Contract().String())
 
 	var sts []base.StateMergeValue
 
@@ -147,7 +147,7 @@ func (opp *BurnProcessor) Process(
 		state.NewDesignStateValue(de),
 	))
 
-	st, err := cstate.ExistsState(g.TokenBalance(fact.Target()), "token balance", getStateFunc)
+	st, err := cstate.ExistsState(g.TokenBalance(fact.Target().String()), "token balance", getStateFunc)
 	if err != nil {
 		return nil, ErrBaseOperationProcess(err, "token balance not found, %s, %s", fact.Contract(), fact.Target()), nil
 	}
@@ -158,10 +158,10 @@ func (opp *BurnProcessor) Process(
 	}
 
 	sts = append(sts, common.NewBaseStateMergeValue(
-		g.TokenBalance(fact.Target()),
+		g.TokenBalance(fact.Target().String()),
 		state.NewDeductTokenBalanceStateValue(fact.Amount()),
 		func(height base.Height, st base.State) base.StateValueMerger {
-			return state.NewTokenBalanceStateValueMerger(height, g.TokenBalance(fact.Target()), st)
+			return state.NewTokenBalanceStateValueMerger(height, g.TokenBalance(fact.Target().String()), st)
 		},
 	))
 

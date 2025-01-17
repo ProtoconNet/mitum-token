@@ -83,7 +83,7 @@ func (opp *TransferProcessor) PreProcess(
 				Errorf("%v: receiver %v is contract account", cErr, fact.Receiver())), nil
 	}
 
-	g := state.NewStateKeyGenerator(fact.Contract())
+	g := state.NewStateKeyGenerator(fact.Contract().String())
 
 	if err := currencystate.CheckExistsState(g.Design(), getStateFunc); err != nil {
 		return nil, base.NewBaseOperationProcessReasonError(
@@ -93,7 +93,7 @@ func (opp *TransferProcessor) PreProcess(
 			)), nil
 	}
 
-	st, err := currencystate.ExistsState(g.TokenBalance(fact.Sender()), "token balance", getStateFunc)
+	st, err := currencystate.ExistsState(g.TokenBalance(fact.Sender().String()), "token balance", getStateFunc)
 	if err != nil {
 		return nil, base.NewBaseOperationProcessReasonError(
 			common.ErrMPreProcess.Wrap(common.ErrMStateNF).
@@ -123,15 +123,15 @@ func (opp *TransferProcessor) Process(
 ) {
 	fact, _ := op.Fact().(TransferFact)
 
-	g := state.NewStateKeyGenerator(fact.Contract())
+	g := state.NewStateKeyGenerator(fact.Contract().String())
 
 	var sts []base.StateMergeValue
 
 	sts = append(sts, common.NewBaseStateMergeValue(
-		g.TokenBalance(fact.Sender()),
+		g.TokenBalance(fact.Sender().String()),
 		state.NewDeductTokenBalanceStateValue(fact.Amount()),
 		func(height base.Height, st base.State) base.StateValueMerger {
-			return state.NewTokenBalanceStateValueMerger(height, g.TokenBalance(fact.Sender()), st)
+			return state.NewTokenBalanceStateValueMerger(height, g.TokenBalance(fact.Sender().String()), st)
 		},
 	))
 
@@ -142,7 +142,7 @@ func (opp *TransferProcessor) Process(
 		sts = append(sts, smv)
 	}
 
-	switch st, found, err := getStateFunc(g.TokenBalance(fact.Receiver())); {
+	switch st, found, err := getStateFunc(g.TokenBalance(fact.Receiver().String())); {
 	case err != nil:
 		return nil, ErrBaseOperationProcess(err, "failed to check token balance, %s, %s", fact.Contract(), fact.Receiver()), nil
 	case found:
@@ -153,10 +153,10 @@ func (opp *TransferProcessor) Process(
 	}
 
 	sts = append(sts, common.NewBaseStateMergeValue(
-		g.TokenBalance(fact.Receiver()),
+		g.TokenBalance(fact.Receiver().String()),
 		state.NewAddTokenBalanceStateValue(fact.Amount()),
 		func(height base.Height, st base.State) base.StateValueMerger {
-			return state.NewTokenBalanceStateValueMerger(height, g.TokenBalance(fact.Receiver()), st)
+			return state.NewTokenBalanceStateValueMerger(height, g.TokenBalance(fact.Receiver().String()), st)
 		},
 	))
 

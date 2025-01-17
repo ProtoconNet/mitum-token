@@ -79,7 +79,7 @@ func (opp *RegisterModelProcessor) PreProcess(
 				Errorf("%v", err)), nil
 	}
 
-	g := state.NewStateKeyGenerator(fact.Contract())
+	g := state.NewStateKeyGenerator(fact.Contract().String())
 
 	if found, _ := cstate.CheckNotExistsState(g.Design(), getStateFunc); found {
 		return ctx, base.NewBaseOperationProcessReasonError(
@@ -101,7 +101,7 @@ func (opp *RegisterModelProcessor) Process(
 		return nil, nil, e.Wrap(errors.Errorf(utils.ErrStringTypeCast(RegisterModelFact{}, op.Fact())))
 	}
 
-	g := state.NewStateKeyGenerator(fact.Contract())
+	g := state.NewStateKeyGenerator(fact.Contract().String())
 
 	var sts []base.StateMergeValue
 
@@ -138,12 +138,12 @@ func (opp *RegisterModelProcessor) Process(
 
 	if fact.InitialSupply().OverZero() {
 		sts = append(sts, common.NewBaseStateMergeValue(
-			g.TokenBalance(fact.Sender()),
+			g.TokenBalance(fact.Sender().String()),
 			state.NewAddTokenBalanceStateValue(fact.InitialSupply()),
 			func(height base.Height, st base.State) base.StateValueMerger {
 				return state.NewTokenBalanceStateValueMerger(
 					height,
-					g.TokenBalance(fact.Sender()),
+					g.TokenBalance(fact.Sender().String()),
 					st,
 				)
 			},

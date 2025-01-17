@@ -113,6 +113,6 @@ func (b DeductTokenBalanceStateValue) HashBytes() []byte {
 	return b.Amount.Bytes()
 }
 
-func StateKeyTokenBalance(contract base.Address, address base.Address) string {
+func StateKeyTokenBalance(contract string, address string) string {
 	return fmt.Sprintf("%s:%s:%s", StateKeyTokenPrefix(contract), address, TokenBalanceSuffix)
 }
