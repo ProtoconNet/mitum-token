@@ -5,9 +5,10 @@ import (
 	"sync"
 
 	"github.com/ProtoconNet/mitum-currency/v3/common"
-	"github.com/ProtoconNet/mitum-currency/v3/state"
-	"github.com/ProtoconNet/mitum-currency/v3/types"
-	tstate "github.com/ProtoconNet/mitum-token/state"
+	cstate "github.com/ProtoconNet/mitum-currency/v3/state"
+	ctypes "github.com/ProtoconNet/mitum-currency/v3/types"
+	"github.com/ProtoconNet/mitum-token/state"
+	"github.com/ProtoconNet/mitum-token/types"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/pkg/errors"
@@ -33,8 +34,9 @@ func (TransfersFrom) Process(
 }
 
 type TransfersFromItemProcessor struct {
-	sender base.Address
-	item   *TransfersFromItem
+	sender  base.Address
+	item    *TransfersFromItem
+	designs map[string]types.Design
 }
 
 func (opp *TransfersFromItemProcessor) PreProcess(
@@ -46,14 +48,64 @@ func (opp *TransfersFromItemProcessor) PreProcess(
 		return e.Wrap(err)
 	}
 
-	if _, _, aErr, cErr := state.ExistsCAccount(opp.item.Target(), "target", true, false, getStateFunc); aErr != nil {
+	if _, _, _, cErr := cstate.ExistsCAccount(opp.item.Receiver(), "receiver", true, false, getStateFunc); cErr != nil {
+		return e.Wrap(common.ErrCAccountNA.Wrap(errors.Errorf("%v: receiver %v is contract account", cErr, opp.item.Receiver())))
+	}
+
+	if _, _, aErr, cErr := cstate.ExistsCAccount(opp.item.Target(), "target", true, false, getStateFunc); aErr != nil {
 		return e.Wrap(aErr)
 	} else if cErr != nil {
 		return e.Wrap(common.ErrCAccountNA.Wrap(errors.Errorf("%v", cErr)))
 	}
 
-	if _, _, _, cErr := state.ExistsCAccount(opp.item.Receiver(), "receiver", true, false, getStateFunc); cErr != nil {
-		return e.Wrap(common.ErrCAccountNA.Wrap(errors.Errorf("%v: receiver %v is contract account", cErr, opp.item.Receiver())))
+	g := state.NewStateKeyGenerator(opp.item.Contract().String())
+
+	design, _ := opp.designs[opp.item.Contract().String()]
+	approveBoxList := design.Policy().ApproveList()
+
+	idx := -1
+	for i, apb := range approveBoxList {
+		if apb.Account().Equal(opp.item.Target()) {
+			idx = i
+			break
+		}
+	}
+
+	if idx < 0 {
+		return e.Wrap(common.ErrAccountNAth.Wrap(
+			errors.Errorf(
+				"target %v has not approved any accounts in contract account %v", opp.item.Target(), opp.item.Contract())))
+	}
+
+	aprInfo := approveBoxList[idx].GetApproveInfo(opp.sender)
+	if aprInfo == nil {
+		return e.Wrap(common.ErrAccountNAth.Wrap(errors.Errorf(
+			"sender %v has not been approved by target %v in contract account %v",
+			opp.sender, opp.item.Target(), opp.item.Contract())))
+	}
+
+	if aprInfo.Amount().Compare(opp.item.Amount()) < 0 {
+		return e.Wrap(common.ErrValueInvalid.Wrap(errors.Errorf(
+			"approved amount of sender %v is less than amount to transfer in contract account %v, %v < %v",
+			opp.sender, opp.item.Contract(), aprInfo.Amount(), opp.item.Amount())))
+	}
+
+	st, err := cstate.ExistsState(g.TokenBalance(opp.item.Target().String()), "token balance", getStateFunc)
+	if err != nil {
+		return e.Wrap(common.ErrStateNF.Wrap(errors.Errorf(
+			"token balance of target %v in contract account %v", opp.item.Target(), opp.item.Contract())))
+	}
+
+	tb, err := state.StateTokenBalanceValue(st)
+	if err != nil {
+		return e.Wrap(common.ErrStateValInvalid.Wrap(errors.Errorf(
+			"token balance of target %v in contract account %v", opp.item.Target(), opp.item.Contract())))
+	}
+
+	if tb.Compare(opp.item.Amount()) < 0 {
+		return e.Wrap(common.ErrValueInvalid.Wrap(errors.Errorf(
+			"token balance of target %v is less than amount to transfer-from in contract account %v, %v < %v",
+			opp.item.Target(), opp.item.Contract(), tb, opp.item.Amount())))
 	}
 
 	return nil
@@ -62,13 +114,45 @@ func (opp *TransfersFromItemProcessor) PreProcess(
 func (opp *TransfersFromItemProcessor) Process(
 	_ context.Context, _ base.Operation, getStateFunc base.GetStateFunc,
 ) ([]base.StateMergeValue, error) {
-	e := util.StringError("preprocess TransfersFromItemProcessor")
+	e := util.StringError("process TransfersFromItemProcessor")
 
-	g := tstate.NewStateKeyGenerator(opp.item.Contract().String())
+	g := state.NewStateKeyGenerator(opp.item.Contract().String())
 	var sts []base.StateMergeValue
+
+	design, _ := opp.designs[opp.item.Contract().String()]
+	approveBoxList := design.Policy().ApproveList()
+
+	idx := -1
+	for i, apb := range approveBoxList {
+		if apb.Account().Equal(opp.item.Target()) {
+			idx = i
+			break
+		}
+	}
+
+	if idx < 0 {
+		return nil, e.Wrap(common.ErrAccountNAth.Wrap(
+			errors.Errorf(
+				"target %v has not approved any accounts in contract account %v during process operation", opp.item.Target(), opp.item.Contract())))
+	}
+
+	apb := approveBoxList[idx]
+	am := apb.GetApproveInfo(opp.sender).Amount().Sub(opp.item.Amount())
+
+	if am.IsZero() {
+		err := apb.RemoveApproveInfo(opp.sender)
+		if err != nil {
+			return nil, e.Wrap(err)
+		}
+	} else {
+		apb.SetApproveInfo(types.NewApproveInfo(opp.sender, am))
+	}
+
+	approveBoxList[idx] = apb
+
 	receiver := opp.item.Receiver()
 	amount := opp.item.Amount()
-	smv, err := state.CreateNotExistAccount(receiver, getStateFunc)
+	smv, err := cstate.CreateNotExistAccount(receiver, getStateFunc)
 	if err != nil {
 		return nil, e.Wrap(err)
 	} else if smv != nil {
@@ -79,7 +163,7 @@ func (opp *TransfersFromItemProcessor) Process(
 	case err != nil:
 		return nil, e.Wrap(err)
 	case found:
-		_, err := tstate.StateTokenBalanceValue(st)
+		_, err := state.StateTokenBalanceValue(st)
 		if err != nil {
 			return nil, e.Wrap(err)
 		}
@@ -87,9 +171,9 @@ func (opp *TransfersFromItemProcessor) Process(
 
 	sts = append(sts, common.NewBaseStateMergeValue(
 		g.TokenBalance(receiver.String()),
-		tstate.NewAddTokenBalanceStateValue(amount),
+		state.NewAddTokenBalanceStateValue(amount),
 		func(height base.Height, st base.State) base.StateValueMerger {
-			return tstate.NewTokenBalanceStateValueMerger(height, g.TokenBalance(receiver.String()), st)
+			return state.NewTokenBalanceStateValueMerger(height, g.TokenBalance(receiver.String()), st)
 		},
 	))
 
@@ -104,10 +188,9 @@ func (opp *TransfersFromItemProcessor) Close() {
 
 type TransfersFromProcessor struct {
 	*base.BaseOperationProcessor
-	required map[string]common.Big
 }
 
-func NewTransfersFromProcessor() types.GetNewProcessor {
+func NewTransfersFromProcessor() ctypes.GetNewProcessor {
 	return func(
 		height base.Height,
 		getStateFunc base.GetStateFunc,
@@ -129,7 +212,6 @@ func NewTransfersFromProcessor() types.GetNewProcessor {
 		}
 
 		opp.BaseOperationProcessor = b
-		opp.required = nil
 
 		return opp, nil
 	}
@@ -145,85 +227,60 @@ func (opp *TransfersFromProcessor) PreProcess(
 		), nil
 	}
 
-	var required = make(map[string]common.Big)
+	requiredMap := make(map[string]map[string]common.Big)
+	designs := make(map[string]types.Design)
 	for i := range fact.Items() {
-		v, found := required[fact.Items()[i].contract.String()]
+		required, found := requiredMap[fact.Items()[i].Target().String()]
 		if !found {
-			required[fact.Items()[i].contract.String()] = fact.Items()[i].amount
+			rq := make(map[string]common.Big)
+			rq[fact.Items()[i].Contract().String()] = fact.Items()[i].Amount()
+			requiredMap[fact.Items()[i].Target().String()] = rq
 		} else {
-			required[fact.Items()[i].contract.String()] = v.Add(fact.Items()[i].amount)
+			rq, found := required[fact.Items()[i].Contract().String()]
+			if !found {
+				required[fact.Items()[i].Contract().String()] = fact.Items()[i].Amount()
+			} else {
+				required[fact.Items()[i].Contract().String()] = rq.Add(fact.Items()[i].Amount())
+			}
+		}
+
+		keyGenerator := state.NewStateKeyGenerator(fact.Items()[i].Contract().String())
+		st, _ := cstate.ExistsState(keyGenerator.Design(), "design", getStateFunc)
+		design, _ := state.StateDesignValue(st)
+		if _, found := designs[fact.Items()[i].contract.String()]; !found {
+			designs[fact.Items()[i].contract.String()] = *design
 		}
 	}
-	for ca, am := range required {
-		g := tstate.NewStateKeyGenerator(ca)
 
-		if err := state.CheckExistsState(g.Design(), getStateFunc); err != nil {
-			return nil, base.NewBaseOperationProcessReasonError(
+	for holder, required := range requiredMap {
+		_, err := PrepareSenderTotalAmounts(holder, required, getStateFunc)
+		if err != nil {
+			return ctx, base.NewBaseOperationProcessReasonError(
 				common.ErrMPreProcess.
-					Wrap(common.ErrMServiceNF).Errorf("token design for contract account %v",
-					ca,
-				)), nil
-		}
-
-		st, err := state.ExistsState(g.TokenBalance(fact.Sender().String()), "token balance", getStateFunc)
-		if err != nil {
-			return nil, base.NewBaseOperationProcessReasonError(
-				common.ErrMPreProcess.Wrap(common.ErrMStateNF).
-					Errorf("token balance of sender %v in contract account %v", fact.Sender(), ca)), nil
-		}
-
-		tb, err := tstate.StateTokenBalanceValue(st)
-		if err != nil {
-			return nil, base.NewBaseOperationProcessReasonError(
-				common.ErrMPreProcess.Wrap(common.ErrMStateValInvalid).
-					Errorf("token balance of sender %v in contract account %v", fact.Sender(), ca)), nil
-		}
-
-		if tb.Compare(am) < 0 {
-			return nil, base.NewBaseOperationProcessReasonError(
-				common.ErrMPreProcess.Wrap(common.ErrMValueInvalid).
-					Errorf("token balance of sender %v is less than amount to transfer in contract account %v, %v < %v",
-						fact.Sender(), ca, tb, am)), nil
+					Errorf("%v", err)), nil
 		}
 	}
-	opp.required = required
 
-	var wg sync.WaitGroup
-	errChan := make(chan *base.BaseOperationProcessReasonError, len(fact.items))
-	for i := range fact.items {
-		wg.Add(1)
-		go func(item TransfersFromItem) {
-			defer wg.Done()
-			tip := transfersFromItemProcessorPool.Get()
-			t, ok := tip.(*TransfersFromItemProcessor)
-			if !ok {
-				err := base.NewBaseOperationProcessReasonError(
-					common.ErrMPreProcess.Wrap(
-						common.ErrMTypeMismatch).Errorf("expected %T, not %T", &TransfersFromItemProcessor{}, tip))
-				errChan <- &err
-				return
-			}
-
-			t.sender = fact.Sender()
-			t.item = &item
-
-			if err := t.PreProcess(ctx, op, getStateFunc); err != nil {
-				err := base.NewBaseOperationProcessReasonError(common.ErrMPreProcess.Errorf("%v", err))
-				errChan <- &err
-				return
-			}
-			t.Close()
-		}(fact.items[i])
-	}
-	go func() {
-		wg.Wait()
-		close(errChan)
-	}()
-
-	for err := range errChan {
-		if err != nil {
-			return nil, *err, nil
+	for i := range fact.Items() {
+		tip := transfersFromItemProcessorPool.Get()
+		t, ok := tip.(*TransfersFromItemProcessor)
+		if !ok {
+			return ctx, base.NewBaseOperationProcessReasonError(
+				common.ErrMPreProcess.Wrap(
+					common.ErrMTypeMismatch).Errorf("expected %T, not %T", &TransfersFromItemProcessor{}, tip)), nil
 		}
+
+		item := fact.items[i]
+		t.sender = fact.Sender()
+		t.item = &item
+		t.designs = designs
+
+		if err := t.PreProcess(ctx, op, getStateFunc); err != nil {
+			return ctx, base.NewBaseOperationProcessReasonError(
+				common.ErrMPreProcess.
+					Errorf("%v", err)), nil
+		}
+		t.Close()
 	}
 
 	return ctx, nil, nil
@@ -238,62 +295,66 @@ func (opp *TransfersFromProcessor) Process( // nolint:dupl
 		return nil, base.NewBaseOperationProcessReasonError("expected %T, not %T", TransfersFromFact{}, op.Fact()), nil
 	}
 
-	var stateMergeValues []base.StateMergeValue // nolint:prealloc
-	var wg sync.WaitGroup
-	var mu sync.Mutex
-	errChan := make(chan *base.BaseOperationProcessReasonError, len(fact.items))
-	for i := range fact.items {
-		wg.Add(1)
-		go func(item TransfersFromItem) {
-			defer wg.Done()
-			cip := transfersFromItemProcessorPool.Get()
-			c, ok := cip.(*TransfersFromItemProcessor)
-			if !ok {
-				err := base.NewBaseOperationProcessReasonError("expected %T, not %T", &TransfersFromItemProcessor{}, cip)
-				errChan <- &err
-				return
+	requiredMap := make(map[string]map[string]common.Big)
+	designs := make(map[string]types.Design)
+	for i := range fact.Items() {
+		required, found := requiredMap[fact.Items()[i].Target().String()]
+		if !found {
+			rq := make(map[string]common.Big)
+			rq[fact.Items()[i].Contract().String()] = fact.Items()[i].Amount()
+			requiredMap[fact.Items()[i].Target().String()] = rq
+		} else {
+			rq, found := required[fact.Items()[i].Contract().String()]
+			if !found {
+				required[fact.Items()[i].Contract().String()] = fact.Items()[i].Amount()
+			} else {
+				required[fact.Items()[i].Contract().String()] = rq.Add(fact.Items()[i].Amount())
 			}
+		}
 
-			c.sender = fact.Sender()
-			c.item = &item
-
-			s, err := c.Process(ctx, op, getStateFunc)
-			if err != nil {
-				err := base.NewBaseOperationProcessReasonError("process transfersFrom item: %w", err)
-				errChan <- &err
-				return
-			}
-			mu.Lock()
-			stateMergeValues = append(stateMergeValues, s...)
-			mu.Unlock()
-			c.Close()
-		}(fact.items[i])
-	}
-	go func() {
-		wg.Wait()
-		close(errChan)
-	}()
-	for err := range errChan {
-		if err != nil {
-			return nil, *err, nil
+		keyGenerator := state.NewStateKeyGenerator(fact.Items()[i].Contract().String())
+		st, _ := cstate.ExistsState(keyGenerator.Design(), "design", getStateFunc)
+		design, _ := state.StateDesignValue(st)
+		if _, found := designs[fact.Items()[i].contract.String()]; !found {
+			designs[fact.Items()[i].Contract().String()] = *design
 		}
 	}
 
-	totalAmounts, err := PrepareSenderTotalAmounts(fact.Sender(), opp.required, getStateFunc)
-	if err != nil {
-		return nil, base.NewBaseOperationProcessReasonError("process TransfersFrom; %w", err), nil
+	var stateMergeValues []base.StateMergeValue // nolint:prealloc
+	for i := range fact.Items() {
+		cip := transfersFromItemProcessorPool.Get()
+		c, ok := cip.(*TransfersFromItemProcessor)
+		if !ok {
+			return nil, base.NewBaseOperationProcessReasonError("expected %T, not %T", &TransfersFromItemProcessor{}, cip), nil
+		}
+
+		item := fact.Items()[i]
+		c.sender = fact.Sender()
+		c.item = &item
+		c.designs = designs
+
+		s, err := c.Process(ctx, op, getStateFunc)
+		if err != nil {
+			return nil, base.NewBaseOperationProcessReasonError("process transfersFrom item: %w", err), nil
+		}
+		stateMergeValues = append(stateMergeValues, s...)
+		c.Close()
 	}
 
-	for key, total := range totalAmounts {
-		stateMergeValues = append(
-			stateMergeValues,
-			common.NewBaseStateMergeValue(
-				key,
-				tstate.NewDeductTokenBalanceStateValue(total),
-				func(height base.Height, st base.State) base.StateValueMerger {
-					return tstate.NewTokenBalanceStateValueMerger(height, key, st)
-				}),
-		)
+	for holder, required := range requiredMap {
+		totalAmounts, _ := PrepareSenderTotalAmounts(holder, required, getStateFunc)
+
+		for key, total := range totalAmounts {
+			stateMergeValues = append(
+				stateMergeValues,
+				common.NewBaseStateMergeValue(
+					key,
+					state.NewDeductTokenBalanceStateValue(total),
+					func(height base.Height, st base.State) base.StateValueMerger {
+						return state.NewTokenBalanceStateValueMerger(height, key, st)
+					}),
+			)
+		}
 	}
 
 	return stateMergeValues, nil, nil

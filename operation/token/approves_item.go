@@ -42,8 +42,8 @@ func (it ApprovesItem) IsValid([]byte) error {
 		return common.ErrSelfTarget.Wrap(errors.Errorf("approved %v is same with contract account", it.approved))
 	}
 
-	if !it.amount.OverZero() {
-		return common.ErrFactInvalid.Wrap(common.ErrValOOR.Wrap(errors.Errorf("approved amount must be over zero, got %v", it.amount)))
+	if !it.amount.OverNil() {
+		return common.ErrFactInvalid.Wrap(common.ErrValOOR.Wrap(errors.Errorf("approve amount must be greater than or equal to zero, got %v", it.amount)))
 	}
 
 	return util.CheckIsValiders(nil, false,

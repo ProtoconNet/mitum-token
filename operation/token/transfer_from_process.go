@@ -184,7 +184,6 @@ func (opp *TransferFromProcessor) Process(
 	fact, _ := op.Fact().(TransferFromFact)
 
 	g := state.NewStateKeyGenerator(fact.Contract().String())
-
 	var sts []base.StateMergeValue
 
 	st, _ := cstate.ExistsState(g.Design(), "design", getStateFunc)

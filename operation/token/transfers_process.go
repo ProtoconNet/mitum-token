@@ -6,9 +6,9 @@ import (
 	"sync"
 
 	"github.com/ProtoconNet/mitum-currency/v3/common"
-	"github.com/ProtoconNet/mitum-currency/v3/state"
+	cstate "github.com/ProtoconNet/mitum-currency/v3/state"
 	"github.com/ProtoconNet/mitum-currency/v3/types"
-	tstate "github.com/ProtoconNet/mitum-token/state"
+	"github.com/ProtoconNet/mitum-token/state"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/pkg/errors"
@@ -48,12 +48,7 @@ func (opp *TransfersItemProcessor) PreProcess(
 		return e.Wrap(err)
 	}
 
-	_, err := state.ExistsCurrencyPolicy(opp.item.Currency(), getStateFunc)
-	if err != nil {
-		return e.Wrap(common.ErrCurrencyNF.Wrap(errors.Errorf("currency id %v", opp.item.Currency())))
-	}
-
-	if _, _, _, cErr := state.ExistsCAccount(opp.item.Receiver(), "receiver", true, false, getStateFunc); cErr != nil {
+	if _, _, _, cErr := cstate.ExistsCAccount(opp.item.Receiver(), "receiver", true, false, getStateFunc); cErr != nil {
 		return e.Wrap(common.ErrCAccountNA.Wrap(errors.Errorf("%v: receiver %v is contract account", cErr, opp.item.Receiver())))
 	}
 
@@ -65,11 +60,11 @@ func (opp *TransfersItemProcessor) Process(
 ) ([]base.StateMergeValue, error) {
 	e := util.StringError("preprocess TransfersItemProcessor")
 
-	g := tstate.NewStateKeyGenerator(opp.item.Contract().String())
+	g := state.NewStateKeyGenerator(opp.item.Contract().String())
 	var sts []base.StateMergeValue
 	receiver := opp.item.Receiver()
 	amount := opp.item.Amount()
-	smv, err := state.CreateNotExistAccount(receiver, getStateFunc)
+	smv, err := cstate.CreateNotExistAccount(receiver, getStateFunc)
 	if err != nil {
 		return nil, e.Wrap(err)
 	} else if smv != nil {
@@ -80,7 +75,7 @@ func (opp *TransfersItemProcessor) Process(
 	case err != nil:
 		return nil, e.Wrap(err)
 	case found:
-		_, err := tstate.StateTokenBalanceValue(st)
+		_, err := state.StateTokenBalanceValue(st)
 		if err != nil {
 			return nil, e.Wrap(err)
 		}
@@ -88,9 +83,9 @@ func (opp *TransfersItemProcessor) Process(
 
 	sts = append(sts, common.NewBaseStateMergeValue(
 		g.TokenBalance(receiver.String()),
-		tstate.NewAddTokenBalanceStateValue(amount),
+		state.NewAddTokenBalanceStateValue(amount),
 		func(height base.Height, st base.State) base.StateValueMerger {
-			return tstate.NewTokenBalanceStateValueMerger(height, g.TokenBalance(receiver.String()), st)
+			return state.NewTokenBalanceStateValueMerger(height, g.TokenBalance(receiver.String()), st)
 		},
 	))
 
@@ -106,7 +101,6 @@ func (opp *TransfersItemProcessor) Close() {
 
 type TransfersProcessor struct {
 	*base.BaseOperationProcessor
-	required map[string]common.Big
 }
 
 func NewTransfersProcessor() types.GetNewProcessor {
@@ -131,7 +125,6 @@ func NewTransfersProcessor() types.GetNewProcessor {
 		}
 
 		opp.BaseOperationProcessor = b
-		opp.required = nil
 
 		return opp, nil
 	}
@@ -147,52 +140,24 @@ func (opp *TransfersProcessor) PreProcess(
 		), nil
 	}
 
-	var required = make(map[string]common.Big)
+	required := make(map[string]common.Big)
 	for i := range fact.Items() {
 		v, found := required[fact.Items()[i].contract.String()]
 		if !found {
-			required[fact.Items()[i].contract.String()] = fact.Items()[i].amount
+			required[fact.Items()[i].contract.String()] = fact.Items()[i].Amount()
 		} else {
-			required[fact.Items()[i].contract.String()] = v.Add(fact.Items()[i].amount)
+			required[fact.Items()[i].contract.String()] = v.Add(fact.Items()[i].Amount())
 		}
 	}
-	for ca, am := range required {
-		g := tstate.NewStateKeyGenerator(ca)
 
-		if err := state.CheckExistsState(g.Design(), getStateFunc); err != nil {
-			return nil, base.NewBaseOperationProcessReasonError(
-				common.ErrMPreProcess.
-					Wrap(common.ErrMServiceNF).Errorf("token design for contract account %v",
-					ca,
-				)), nil
-		}
-
-		st, err := state.ExistsState(g.TokenBalance(fact.Sender().String()), "token balance", getStateFunc)
-		if err != nil {
-			return nil, base.NewBaseOperationProcessReasonError(
-				common.ErrMPreProcess.Wrap(common.ErrMStateNF).
-					Errorf("token balance of sender %v in contract account %v", fact.Sender(), ca)), nil
-		}
-
-		tb, err := tstate.StateTokenBalanceValue(st)
-		if err != nil {
-			return nil, base.NewBaseOperationProcessReasonError(
-				common.ErrMPreProcess.Wrap(common.ErrMStateValInvalid).
-					Errorf("token balance of sender %v in contract account %v", fact.Sender(), ca)), nil
-		}
-
-		if tb.Compare(am) < 0 {
-			return nil, base.NewBaseOperationProcessReasonError(
-				common.ErrMPreProcess.Wrap(common.ErrMValueInvalid).
-					Errorf("token balance of sender %v is less than amount to transfer in contract account %v, %v < %v",
-						fact.Sender(), ca, tb, am)), nil
-		}
+	_, err := PrepareSenderTotalAmounts(fact.Sender().String(), required, getStateFunc)
+	if err != nil {
+		return nil, base.NewBaseOperationProcessReasonError("process Transfers; %w", err), nil
 	}
-	opp.required = required
 
 	var wg sync.WaitGroup
-	errChan := make(chan *base.BaseOperationProcessReasonError, len(fact.items))
-	for i := range fact.items {
+	errChan := make(chan *base.BaseOperationProcessReasonError, len(fact.Items()))
+	for i := range fact.Items() {
 		wg.Add(1)
 		go func(item TransfersItem) {
 			defer wg.Done()
@@ -215,7 +180,7 @@ func (opp *TransfersProcessor) PreProcess(
 				return
 			}
 			t.Close()
-		}(fact.items[i])
+		}(fact.Items()[i])
 	}
 	go func() {
 		wg.Wait()
@@ -243,8 +208,8 @@ func (opp *TransfersProcessor) Process( // nolint:dupl
 	var stateMergeValues []base.StateMergeValue // nolint:prealloc
 	var wg sync.WaitGroup
 	var mu sync.Mutex
-	errChan := make(chan *base.BaseOperationProcessReasonError, len(fact.items))
-	for i := range fact.items {
+	errChan := make(chan *base.BaseOperationProcessReasonError, len(fact.Items()))
+	for i := range fact.Items() {
 		wg.Add(1)
 		go func(item TransfersItem) {
 			defer wg.Done()
@@ -269,7 +234,7 @@ func (opp *TransfersProcessor) Process( // nolint:dupl
 			stateMergeValues = append(stateMergeValues, s...)
 			mu.Unlock()
 			c.Close()
-		}(fact.items[i])
+		}(fact.Items()[i])
 	}
 	go func() {
 		wg.Wait()
@@ -281,19 +246,25 @@ func (opp *TransfersProcessor) Process( // nolint:dupl
 		}
 	}
 
-	totalAmounts, err := PrepareSenderTotalAmounts(fact.Sender(), opp.required, getStateFunc)
-	if err != nil {
-		return nil, base.NewBaseOperationProcessReasonError("process Transfers; %w", err), nil
+	required := make(map[string]common.Big)
+	for i := range fact.Items() {
+		v, found := required[fact.Items()[i].contract.String()]
+		if !found {
+			required[fact.Items()[i].contract.String()] = fact.Items()[i].amount
+		} else {
+			required[fact.Items()[i].contract.String()] = v.Add(fact.Items()[i].amount)
+		}
 	}
+	totalAmounts, _ := PrepareSenderTotalAmounts(fact.Sender().String(), required, getStateFunc)
 
 	for key, total := range totalAmounts {
 		stateMergeValues = append(
 			stateMergeValues,
 			common.NewBaseStateMergeValue(
 				key,
-				tstate.NewDeductTokenBalanceStateValue(total),
+				state.NewDeductTokenBalanceStateValue(total),
 				func(height base.Height, st base.State) base.StateValueMerger {
-					return tstate.NewTokenBalanceStateValueMerger(height, key, st)
+					return state.NewTokenBalanceStateValueMerger(height, key, st)
 				}),
 		)
 	}
@@ -308,20 +279,32 @@ func (opp *TransfersProcessor) Close() error {
 }
 
 func PrepareSenderTotalAmounts(
-	holder base.Address,
+	holder string,
 	required map[string]common.Big,
 	getStateFunc base.GetStateFunc,
 ) (map[string]common.Big, error) {
 	totalAmounts := map[string]common.Big{}
 
 	for ca, rq := range required {
-		g := tstate.NewStateKeyGenerator(ca)
-		_, err := state.ExistsState(g.TokenBalance(holder.String()), fmt.Sprintf("token balance, %v", holder), getStateFunc)
+		g := state.NewStateKeyGenerator(ca)
+		if err := cstate.CheckExistsState(g.Design(), getStateFunc); err != nil {
+			return nil, common.ErrServiceNF.Wrap(errors.Errorf("token design for contract account %v", ca))
+		}
+
+		st, err := cstate.ExistsState(g.TokenBalance(holder), fmt.Sprintf("token balance, %s", holder), getStateFunc)
 		if err != nil {
 			return nil, err
 		}
 
-		totalAmounts[g.TokenBalance(holder.String())] = rq
+		am, err := state.StateTokenBalanceValue(st)
+		if err != nil {
+			return nil, err
+		}
+		if am.Compare(rq) < 0 {
+			return nil, errors.Errorf("token balance of holder %s is less than amount to transfer in contract account %s, %v < %v", holder, ca, am, rq)
+		}
+
+		totalAmounts[g.TokenBalance(holder)] = rq
 	}
 
 	return totalAmounts, nil
