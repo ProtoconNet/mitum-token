@@ -1,11 +1,12 @@
 package state
 
 import (
+	"sync"
+
 	"github.com/ProtoconNet/mitum-currency/v3/common"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/pkg/errors"
-	"sync"
 )
 
 type TokenBalanceStateValueMerger struct {

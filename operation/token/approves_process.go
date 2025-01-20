@@ -7,9 +7,9 @@ import (
 	"github.com/ProtoconNet/mitum-currency/v3/common"
 	"github.com/ProtoconNet/mitum-currency/v3/state"
 	cstate "github.com/ProtoconNet/mitum-currency/v3/state"
-	"github.com/ProtoconNet/mitum-currency/v3/types"
+	ctypes "github.com/ProtoconNet/mitum-currency/v3/types"
 	tstate "github.com/ProtoconNet/mitum-token/state"
-	ttype "github.com/ProtoconNet/mitum-token/types"
+	"github.com/ProtoconNet/mitum-token/types"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/pkg/errors"
@@ -101,7 +101,7 @@ func (opp *ApprovesItemProcessor) Process(
 	design, _ := tstate.StateDesignValue(st)
 	apb := design.Policy().GetApproveBox(opp.sender)
 	if apb == nil {
-		a := ttype.NewApproveBox(opp.sender, []ttype.ApproveInfo{ttype.NewApproveInfo(opp.item.Approved(), opp.item.Amount())})
+		a := types.NewApproveBox(opp.sender, []types.ApproveInfo{types.NewApproveInfo(opp.item.Approved(), opp.item.Amount())})
 		apb = &a
 	} else {
 		if opp.item.Amount().IsZero() {
@@ -110,7 +110,7 @@ func (opp *ApprovesItemProcessor) Process(
 				return nil, e.Wrap(errors.Errorf("remove approved, %s: %w", opp.item.Approved().String(), err))
 			}
 		} else {
-			apb.SetApproveInfo(ttype.NewApproveInfo(opp.item.Approved(), opp.item.Amount()))
+			apb.SetApproveInfo(types.NewApproveInfo(opp.item.Approved(), opp.item.Amount()))
 		}
 	}
 
@@ -119,7 +119,7 @@ func (opp *ApprovesItemProcessor) Process(
 	if err := policy.IsValid(nil); err != nil {
 		return nil, ErrInvalid(policy, err)
 	}
-	de := ttype.NewDesign(design.Symbol(), design.Name(), design.Decimal(), policy)
+	de := types.NewDesign(design.Symbol(), design.Name(), design.Decimal(), policy)
 	if err := de.IsValid(nil); err != nil {
 		return nil, ErrInvalid(de, err)
 	}
@@ -142,7 +142,7 @@ type ApprovesProcessor struct {
 	*base.BaseOperationProcessor
 }
 
-func NewApprovesProcessor() types.GetNewProcessor {
+func NewApprovesProcessor() ctypes.GetNewProcessor {
 	return func(
 		height base.Height,
 		getStateFunc base.GetStateFunc,

@@ -3,6 +3,8 @@ package token
 import (
 	"context"
 	"fmt"
+	"sync"
+
 	"github.com/ProtoconNet/mitum-currency/v3/common"
 	"github.com/ProtoconNet/mitum-currency/v3/state"
 	"github.com/ProtoconNet/mitum-currency/v3/types"
@@ -10,7 +12,6 @@ import (
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/pkg/errors"
-	"sync"
 )
 
 var transfersItemProcessorPool = sync.Pool{

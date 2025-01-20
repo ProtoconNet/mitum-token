@@ -5,12 +5,11 @@ import (
 	"fmt"
 	"os"
 
+	ccmds "github.com/ProtoconNet/mitum-currency/v3/cmds"
 	"github.com/ProtoconNet/mitum-token/cmds"
-	launchcmd "github.com/ProtoconNet/mitum2/launch/cmd"
-
-	currencycmds "github.com/ProtoconNet/mitum-currency/v3/cmds"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/launch"
+	launchcmd "github.com/ProtoconNet/mitum2/launch/cmd"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/logging"
 	"github.com/alecthomas/kong"
@@ -27,22 +26,22 @@ var (
 //revive:disable:nested-structs
 var CLI struct { //nolint:govet //...
 	launch.BaseFlags
-	Init      currencycmds.INITCommand `cmd:"" help:"init node"`
-	Run       cmds.RunCommand          `cmd:"" help:"run node"`
-	Storage   cmds.Storage             `cmd:""`
+	Init      ccmds.INITCommand `cmd:"" help:"init node"`
+	Run       cmds.RunCommand   `cmd:"" help:"run node"`
+	Storage   cmds.Storage      `cmd:""`
 	Operation struct {
-		Currency currencycmds.CurrencyCommand `cmd:"" help:"currency operation"`
-		Suffrage currencycmds.SuffrageCommand `cmd:"" help:"suffrage operation"`
-		Token    cmds.TokenCommand            `cmd:"" help:"token operation"`
+		Currency ccmds.CurrencyCommand `cmd:"" help:"currency operation"`
+		Suffrage ccmds.SuffrageCommand `cmd:"" help:"suffrage operation"`
+		Token    cmds.TokenCommand     `cmd:"" help:"token operation"`
 	} `cmd:"" help:"create operation"`
 	Network struct {
 		Client cmds.NetworkClientCommand `cmd:"" help:"network client"`
 	} `cmd:"" help:"network"`
 	Key struct {
-		New     currencycmds.KeyNewCommand     `cmd:"" help:"generate new key"`
-		Address currencycmds.KeyAddressCommand `cmd:"" help:"generate address from key"`
-		Load    launchcmd.KeyLoadCommand       `cmd:"" help:"load key"`
-		Sign    launchcmd.KeySignCommand       `cmd:"" help:"sign"`
+		New     ccmds.KeyNewCommand      `cmd:"" help:"generate new key"`
+		Address ccmds.KeyAddressCommand  `cmd:"" help:"generate address from key"`
+		Load    launchcmd.KeyLoadCommand `cmd:"" help:"load key"`
+		Sign    launchcmd.KeySignCommand `cmd:"" help:"sign"`
 	} `cmd:"" help:"key"`
 	Handover launchcmd.HandoverCommands `cmd:""`
 	Version  struct{}                   `cmd:"" help:"version"`

@@ -2,11 +2,11 @@ package state
 
 import (
 	"encoding/json"
-	"github.com/ProtoconNet/mitum2/util/encoder"
 
 	"github.com/ProtoconNet/mitum-token/types"
 	"github.com/ProtoconNet/mitum-token/utils"
 	"github.com/ProtoconNet/mitum2/util"
+	"github.com/ProtoconNet/mitum2/util/encoder"
 	"github.com/ProtoconNet/mitum2/util/hint"
 )
 

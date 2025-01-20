@@ -3,17 +3,17 @@ package cmds
 import (
 	"context"
 	"fmt"
-	"github.com/ProtoconNet/mitum2/base"
-	"github.com/pkg/errors"
 	"io"
 	"os"
 
-	currencycmds "github.com/ProtoconNet/mitum-currency/v3/cmds"
+	ccmds "github.com/ProtoconNet/mitum-currency/v3/cmds"
+	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/launch"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/encoder"
 	"github.com/ProtoconNet/mitum2/util/logging"
 	"github.com/ProtoconNet/mitum2/util/ps"
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 )
 
@@ -29,7 +29,7 @@ func (cmd *BaseCommand) prepare(pctx context.Context) (context.Context, error) {
 	pps := ps.NewPS("cmd")
 
 	_ = pps.
-		AddOK(launch.PNameEncoder, currencycmds.PEncoder, nil)
+		AddOK(launch.PNameEncoder, ccmds.PEncoder, nil)
 
 	_ = pps.POK(launch.PNameEncoder).
 		PostAddOK(launch.PNameAddHinters, PAddHinters)
@@ -64,12 +64,12 @@ func PAddHinters(pctx context.Context) (context.Context, error) {
 	e := util.StringError("add hinters")
 
 	var encs *encoder.Encoders
-	var f currencycmds.ProposalOperationFactHintFunc = IsSupportedProposalOperationFactHintFunc
+	var f ccmds.ProposalOperationFactHintFunc = IsSupportedProposalOperationFactHintFunc
 
 	if err := util.LoadFromContextOK(pctx, launch.EncodersContextKey, &encs); err != nil {
 		return pctx, e.Wrap(err)
 	}
-	pctx = context.WithValue(pctx, currencycmds.ProposalOperationFactHintContextKey, f)
+	pctx = context.WithValue(pctx, ccmds.ProposalOperationFactHintContextKey, f)
 
 	if err := LoadHinters(encs); err != nil {
 		return pctx, e.Wrap(err)
@@ -80,10 +80,10 @@ func PAddHinters(pctx context.Context) (context.Context, error) {
 
 type OperationCommand struct {
 	BaseCommand
-	currencycmds.OperationFlags
-	Sender   currencycmds.AddressFlag    `arg:"" name:"sender" help:"sender address" required:"true"`
-	Contract currencycmds.AddressFlag    `arg:"" name:"contract" help:"contract address to register token" required:"true"`
-	Currency currencycmds.CurrencyIDFlag `arg:"" name:"currency" help:"currency id" required:"true"`
+	ccmds.OperationFlags
+	Sender   ccmds.AddressFlag    `arg:"" name:"sender" help:"sender address" required:"true"`
+	Contract ccmds.AddressFlag    `arg:"" name:"contract" help:"contract address to register token" required:"true"`
+	Currency ccmds.CurrencyIDFlag `arg:"" name:"currency" help:"currency id" required:"true"`
 	sender   base.Address
 	contract base.Address
 }

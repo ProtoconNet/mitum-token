@@ -5,13 +5,12 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/ProtoconNet/mitum-token/types"
-	"github.com/ProtoconNet/mitum-token/utils"
-
 	"github.com/ProtoconNet/mitum-currency/v3/common"
 	cstate "github.com/ProtoconNet/mitum-currency/v3/state"
 	ctypes "github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum-token/state"
+	"github.com/ProtoconNet/mitum-token/types"
+	"github.com/ProtoconNet/mitum-token/utils"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/pkg/errors"

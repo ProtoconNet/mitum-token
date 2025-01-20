@@ -3,20 +3,19 @@ package cmds
 import (
 	"context"
 
-	currencycmds "github.com/ProtoconNet/mitum-currency/v3/cmds"
+	ccmds "github.com/ProtoconNet/mitum-currency/v3/cmds"
 	"github.com/ProtoconNet/mitum-token/operation/token"
 	"github.com/ProtoconNet/mitum-token/utils"
-	"github.com/pkg/errors"
-
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
+	"github.com/pkg/errors"
 )
 
 type TransferFromCommand struct {
 	OperationCommand
-	Receiver currencycmds.AddressFlag `arg:"" name:"receiver" help:"token receiver" required:"true"`
-	Target   currencycmds.AddressFlag `arg:"" name:"target" help:"target approving" required:"true"`
-	Amount   currencycmds.BigFlag     `arg:"" name:"amount" help:"amount to transfer" required:"true"`
+	Receiver ccmds.AddressFlag `arg:"" name:"receiver" help:"token receiver" required:"true"`
+	Target   ccmds.AddressFlag `arg:"" name:"target" help:"target approving" required:"true"`
+	Amount   ccmds.BigFlag     `arg:"" name:"amount" help:"amount to transfer" required:"true"`
 	receiver base.Address
 	target   base.Address
 }
@@ -35,7 +34,7 @@ func (cmd *TransferFromCommand) Run(pctx context.Context) error { // nolint:dupl
 		return err
 	}
 
-	currencycmds.PrettyPrint(cmd.Out, op)
+	ccmds.PrettyPrint(cmd.Out, op)
 
 	return nil
 }

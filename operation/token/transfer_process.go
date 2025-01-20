@@ -5,12 +5,11 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/ProtoconNet/mitum-token/utils"
-
 	"github.com/ProtoconNet/mitum-currency/v3/common"
-	currencystate "github.com/ProtoconNet/mitum-currency/v3/state"
-	currencytypes "github.com/ProtoconNet/mitum-currency/v3/types"
+	cstate "github.com/ProtoconNet/mitum-currency/v3/state"
+	ctypes "github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum-token/state"
+	"github.com/ProtoconNet/mitum-token/utils"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/pkg/errors"
@@ -32,7 +31,7 @@ type TransferProcessor struct {
 	*base.BaseOperationProcessor
 }
 
-func NewTransferProcessor() currencytypes.GetNewProcessor {
+func NewTransferProcessor() ctypes.GetNewProcessor {
 	return func(
 		height base.Height,
 		getStateFunc base.GetStateFunc,
@@ -77,7 +76,7 @@ func (opp *TransferProcessor) PreProcess(
 				Errorf("%v", err)), nil
 	}
 
-	if _, _, _, cErr := currencystate.ExistsCAccount(fact.Receiver(), "receiver", true, false, getStateFunc); cErr != nil {
+	if _, _, _, cErr := cstate.ExistsCAccount(fact.Receiver(), "receiver", true, false, getStateFunc); cErr != nil {
 		return ctx, base.NewBaseOperationProcessReasonError(
 			common.ErrMPreProcess.Wrap(common.ErrMCAccountNA).
 				Errorf("%v: receiver %v is contract account", cErr, fact.Receiver())), nil
@@ -85,7 +84,7 @@ func (opp *TransferProcessor) PreProcess(
 
 	g := state.NewStateKeyGenerator(fact.Contract().String())
 
-	if err := currencystate.CheckExistsState(g.Design(), getStateFunc); err != nil {
+	if err := cstate.CheckExistsState(g.Design(), getStateFunc); err != nil {
 		return nil, base.NewBaseOperationProcessReasonError(
 			common.ErrMPreProcess.
 				Wrap(common.ErrMServiceNF).Errorf("token design for contract account %v",
@@ -93,7 +92,7 @@ func (opp *TransferProcessor) PreProcess(
 			)), nil
 	}
 
-	st, err := currencystate.ExistsState(g.TokenBalance(fact.Sender().String()), "token balance", getStateFunc)
+	st, err := cstate.ExistsState(g.TokenBalance(fact.Sender().String()), "token balance", getStateFunc)
 	if err != nil {
 		return nil, base.NewBaseOperationProcessReasonError(
 			common.ErrMPreProcess.Wrap(common.ErrMStateNF).
@@ -135,7 +134,7 @@ func (opp *TransferProcessor) Process(
 		},
 	))
 
-	smv, err := currencystate.CreateNotExistAccount(fact.Receiver(), getStateFunc)
+	smv, err := cstate.CreateNotExistAccount(fact.Receiver(), getStateFunc)
 	if err != nil {
 		return nil, base.NewBaseOperationProcessReasonError("%w", err), nil
 	} else if smv != nil {

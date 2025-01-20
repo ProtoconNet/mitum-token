@@ -2,17 +2,16 @@ package digest
 
 import (
 	"context"
-	isaacnetwork "github.com/ProtoconNet/mitum2/isaac/network"
-	"github.com/ProtoconNet/mitum2/network/quicmemberlist"
-	"github.com/ProtoconNet/mitum2/network/quicstream"
 	"net/http"
 	"time"
 
-	currencydigest "github.com/ProtoconNet/mitum-currency/v3/digest"
-
+	cdigest "github.com/ProtoconNet/mitum-currency/v3/digest"
 	"github.com/ProtoconNet/mitum-currency/v3/digest/network"
 	"github.com/ProtoconNet/mitum2/base"
+	isaacnetwork "github.com/ProtoconNet/mitum2/isaac/network"
 	"github.com/ProtoconNet/mitum2/launch"
+	"github.com/ProtoconNet/mitum2/network/quicmemberlist"
+	"github.com/ProtoconNet/mitum2/network/quicstream"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/encoder"
 	"github.com/ProtoconNet/mitum2/util/logging"
@@ -28,10 +27,10 @@ var (
 )
 
 func init() {
-	if b, err := currencydigest.JSON.Marshal(currencydigest.UnknownProblem); err != nil {
+	if b, err := cdigest.JSON.Marshal(cdigest.UnknownProblem); err != nil {
 		panic(err)
 	} else {
-		currencydigest.UnknownProblemJSON = b
+		cdigest.UnknownProblemJSON = b
 	}
 }
 
@@ -40,9 +39,9 @@ type Handlers struct {
 	networkID       base.NetworkID
 	encoders        *encoder.Encoders
 	encoder         encoder.Encoder
-	database        *currencydigest.Database
-	cache           currencydigest.Cache
-	nodeInfoHandler currencydigest.NodeInfoHandler
+	database        *cdigest.Database
+	cache           cdigest.Cache
+	nodeInfoHandler cdigest.NodeInfoHandler
 	send            func(interface{}) (base.Operation, error)
 	client          func() (*isaacnetwork.BaseClient, *quicmemberlist.Memberlist, []quicstream.ConnInfo, error)
 	router          *mux.Router
@@ -57,8 +56,8 @@ func NewHandlers(
 	networkID base.NetworkID,
 	encs *encoder.Encoders,
 	enc encoder.Encoder,
-	st *currencydigest.Database,
-	cache currencydigest.Cache,
+	st *cdigest.Database,
+	cache cdigest.Cache,
 	router *mux.Router,
 	routes map[string]*mux.Route,
 ) *Handlers {
@@ -76,7 +75,7 @@ func NewHandlers(
 		cache:           cache,
 		router:          router,
 		routes:          routes,
-		itemsLimiter:    currencydigest.DefaultItemsLimiter,
+		itemsLimiter:    cdigest.DefaultItemsLimiter,
 		rg:              &singleflight.Group{},
 		expireNotFilled: time.Second * 3,
 	}
@@ -102,7 +101,7 @@ func (hd *Handlers) SetLimiter(f func(string) int64) *Handlers {
 	return hd
 }
 
-func (hd *Handlers) Cache() currencydigest.Cache {
+func (hd *Handlers) Cache() cdigest.Cache {
 	return hd.cache
 }
 
@@ -127,7 +126,7 @@ func (hd *Handlers) setHandler(prefix string, h network.HTTPHandlerFunc, useCach
 	if !useCache {
 		handler = http.HandlerFunc(h)
 	} else {
-		ch := currencydigest.NewCachedHTTPHandler(hd.cache, h)
+		ch := cdigest.NewCachedHTTPHandler(hd.cache, h)
 
 		handler = ch
 	}
@@ -146,7 +145,7 @@ func (hd *Handlers) setHandler(prefix string, h network.HTTPHandlerFunc, useCach
 		route = hd.router.Name(name)
 	}
 
-	handler = currencydigest.RateLimiter(rps, burst)(handler)
+	handler = cdigest.RateLimiter(rps, burst)(handler)
 
 	/*
 		if rules, found := hd.rateLimit[prefix]; found {

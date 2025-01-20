@@ -2,9 +2,9 @@ package digest
 
 import (
 	"github.com/ProtoconNet/mitum-currency/v3/common"
-	mongodbstorage "github.com/ProtoconNet/mitum-currency/v3/digest/mongodb"
+	mongodbst "github.com/ProtoconNet/mitum-currency/v3/digest/mongodb"
 	bsonenc "github.com/ProtoconNet/mitum-currency/v3/digest/util/bson"
-	crcystate "github.com/ProtoconNet/mitum-currency/v3/state"
+	cstate "github.com/ProtoconNet/mitum-currency/v3/state"
 	"github.com/ProtoconNet/mitum-token/state"
 	"github.com/ProtoconNet/mitum-token/types"
 	"github.com/ProtoconNet/mitum2/base"
@@ -12,7 +12,7 @@ import (
 )
 
 type TokenDoc struct {
-	mongodbstorage.BaseDoc
+	mongodbst.BaseDoc
 	st base.State
 	de types.Design
 }
@@ -22,7 +22,7 @@ func NewTokenDoc(st base.State, enc encoder.Encoder) (TokenDoc, error) {
 	if err != nil {
 		return TokenDoc{}, err
 	}
-	b, err := mongodbstorage.NewBaseDoc(nil, st, enc)
+	b, err := mongodbst.NewBaseDoc(nil, st, enc)
 	if err != nil {
 		return TokenDoc{}, err
 	}
@@ -40,7 +40,7 @@ func (doc TokenDoc) MarshalBSON() ([]byte, error) {
 		return nil, err
 	}
 
-	stateKeys, err := crcystate.ParseStateKey(doc.st.Key(), state.TokenPrefix, 3)
+	stateKeys, err := cstate.ParseStateKey(doc.st.Key(), state.TokenPrefix, 3)
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +52,7 @@ func (doc TokenDoc) MarshalBSON() ([]byte, error) {
 }
 
 type TokenBalanceDoc struct {
-	mongodbstorage.BaseDoc
+	mongodbst.BaseDoc
 	st     base.State
 	amount common.Big
 }
@@ -63,7 +63,7 @@ func NewTokenBalanceDoc(st base.State, enc encoder.Encoder) (*TokenBalanceDoc, e
 		return nil, err
 	}
 
-	b, err := mongodbstorage.NewBaseDoc(nil, st, enc)
+	b, err := mongodbst.NewBaseDoc(nil, st, enc)
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +81,7 @@ func (doc TokenBalanceDoc) MarshalBSON() ([]byte, error) {
 		return nil, err
 	}
 
-	stateKeys, err := crcystate.ParseStateKey(doc.st.Key(), state.TokenPrefix, 4)
+	stateKeys, err := cstate.ParseStateKey(doc.st.Key(), state.TokenPrefix, 4)
 	if err != nil {
 		return nil, err
 	}

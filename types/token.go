@@ -1,9 +1,10 @@
 package types
 
 import (
+	"regexp"
+	
 	"github.com/ProtoconNet/mitum-currency/v3/common"
 	"github.com/pkg/errors"
-	"regexp"
 )
 
 var (

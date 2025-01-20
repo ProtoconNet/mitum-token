@@ -2,6 +2,7 @@ package cmds
 
 import (
 	"fmt"
+	
 	"github.com/ProtoconNet/mitum-token/types"
 )
 

@@ -3,20 +3,19 @@ package cmds
 import (
 	"context"
 
-	currencycmds "github.com/ProtoconNet/mitum-currency/v3/cmds"
+	ccmds "github.com/ProtoconNet/mitum-currency/v3/cmds"
 	"github.com/ProtoconNet/mitum-token/operation/token"
 	"github.com/ProtoconNet/mitum-token/utils"
-
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 )
 
 type RegisterModelCommand struct {
 	OperationCommand
-	Symbol        TokenSymbolFlag      `arg:"" name:"symbol" help:"token symbol" required:"true"`
-	Name          string               `arg:"" name:"name" help:"token name" required:"true"`
-	Decimal       currencycmds.BigFlag `arg:"" name:"decimal" help:"decimal of token" required:"true"`
-	InitialSupply currencycmds.BigFlag `arg:"" name:"initial-supply" help:"initial supply of token" required:"true"`
+	Symbol        TokenSymbolFlag `arg:"" name:"symbol" help:"token symbol" required:"true"`
+	Name          string          `arg:"" name:"name" help:"token name" required:"true"`
+	Decimal       ccmds.BigFlag   `arg:"" name:"decimal" help:"decimal of token" required:"true"`
+	InitialSupply ccmds.BigFlag   `arg:"" name:"initial-supply" help:"initial supply of token" required:"true"`
 }
 
 func (cmd *RegisterModelCommand) Run(pctx context.Context) error { // nolint:dupl
@@ -33,7 +32,7 @@ func (cmd *RegisterModelCommand) Run(pctx context.Context) error { // nolint:dup
 		return err
 	}
 
-	currencycmds.PrettyPrint(cmd.Out, op)
+	ccmds.PrettyPrint(cmd.Out, op)
 
 	return nil
 }
