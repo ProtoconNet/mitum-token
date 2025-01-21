@@ -68,6 +68,18 @@ func (fact TransfersFact) IsValid(b []byte) error {
 				common.ErrSelfTarget.Wrap(errors.Errorf("sender %v is same with contract account", fact.sender)))
 		}
 
+		if fact.sender.Equal(item.receiver) {
+			return common.ErrFactInvalid.Wrap(common.ErrSelfTarget.Wrap(errors.Errorf("sender %v is same with receiver", fact.sender)))
+		}
+
+		if item.contract.Equal(item.receiver) {
+			return common.ErrFactInvalid.Wrap(common.ErrSelfTarget.Wrap(errors.Errorf("receiver %v is same with contract account", item.receiver)))
+		}
+
+		if !item.amount.OverZero() {
+			return common.ErrFactInvalid.Wrap(common.ErrValOOR.Wrap(errors.Errorf("transfer amount must be over zero, got %v", item.amount)))
+		}
+
 		if _, found := founds[item.contract.String()+"-"+item.receiver.String()]; found {
 			return common.ErrFactInvalid.Wrap(
 				common.ErrDupVal.Wrap(
