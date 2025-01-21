@@ -341,6 +341,14 @@ func (opp *TransfersFromProcessor) Process( // nolint:dupl
 		c.Close()
 	}
 
+	for k, de := range designs {
+		g := state.NewStateKeyGenerator(k)
+		stateMergeValues = append(stateMergeValues, cstate.NewStateMergeValue(
+			g.Design(),
+			state.NewDesignStateValue(de),
+		))
+	}
+
 	for holder, required := range requiredMap {
 		totalAmounts, _ := PrepareSenderTotalAmounts(holder, required, getStateFunc)
 
