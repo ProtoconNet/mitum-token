@@ -14,10 +14,12 @@ import (
 type TransfersFromCommand struct {
 	OperationCommand
 	Receiver ccmds.AddressFlag `arg:"" name:"receiver" help:"token receiver" required:"true"`
-	Target   ccmds.AddressFlag `arg:"" name:"target" help:"target approving" required:"true"`
+	Target1  ccmds.AddressFlag `arg:"" name:"target1" help:"target approving" required:"true"`
+	Target2  ccmds.AddressFlag `arg:"" name:"target2" help:"target approving" required:"true"`
 	Amount   ccmds.BigFlag     `arg:"" name:"amount" help:"amount to transfer" required:"true"`
 	receiver base.Address
-	target   base.Address
+	target1  base.Address
+	target2  base.Address
 }
 
 func (cmd *TransfersFromCommand) Run(pctx context.Context) error { // nolint:dupl
@@ -50,11 +52,17 @@ func (cmd *TransfersFromCommand) parseFlags() error {
 	}
 	cmd.receiver = receiver
 
-	target, err := cmd.Target.Encode(cmd.Encoders.JSON())
+	target, err := cmd.Target1.Encode(cmd.Encoders.JSON())
 	if err != nil {
-		return errors.Wrapf(err, "invalid target format, %q", cmd.Target.String())
+		return errors.Wrapf(err, "invalid target format, %q", cmd.Target1.String())
 	}
-	cmd.target = target
+	cmd.target1 = target
+
+	target, err = cmd.Target2.Encode(cmd.Encoders.JSON())
+	if err != nil {
+		return errors.Wrapf(err, "invalid target format, %q", cmd.Target2.String())
+	}
+	cmd.target2 = target
 
 	return nil
 }
@@ -62,11 +70,14 @@ func (cmd *TransfersFromCommand) parseFlags() error {
 func (cmd *TransfersFromCommand) createOperation() (base.Operation, error) { // nolint:dupl}
 	e := util.StringError(utils.ErrStringCreate("transfer-from operation"))
 
-	item := token.NewTransfersFromItem(cmd.contract,
-		cmd.receiver, cmd.target, cmd.Amount.Big, cmd.Currency.CID)
+	item1 := token.NewTransfersFromItem(cmd.contract,
+		cmd.receiver, cmd.target1, cmd.Amount.Big, cmd.Currency.CID)
+
+	item2 := token.NewTransfersFromItem(cmd.contract,
+		cmd.receiver, cmd.target2, cmd.Amount.Big, cmd.Currency.CID)
 
 	fact := token.NewTransfersFromFact(
-		[]byte(cmd.Token), cmd.sender, []token.TransfersFromItem{item},
+		[]byte(cmd.Token), cmd.sender, []token.TransfersFromItem{item1, item2},
 	)
 
 	op := token.NewTransfersFrom(fact)

@@ -13,9 +13,11 @@ import (
 
 type TransfersCommand struct {
 	OperationCommand
-	Receiver ccmds.AddressFlag `arg:"" name:"receiver" help:"token receiver" required:"true"`
-	Amount   ccmds.BigFlag     `arg:"" name:"amount" help:"amount to transfer" required:"true"`
-	receiver base.Address
+	Receiver1 ccmds.AddressFlag `arg:"" name:"receiver" help:"token receiver" required:"true"`
+	Receiver2 ccmds.AddressFlag `arg:"" name:"receiver" help:"token receiver" required:"true"`
+	Amount    ccmds.BigFlag     `arg:"" name:"amount" help:"amount to transfer" required:"true"`
+	receiver1 base.Address
+	receiver2 base.Address
 }
 
 func (cmd *TransfersCommand) Run(pctx context.Context) error { // nolint:dupl
@@ -42,11 +44,17 @@ func (cmd *TransfersCommand) parseFlags() error {
 		return err
 	}
 
-	receiver, err := cmd.Receiver.Encode(cmd.Encoders.JSON())
+	receiver, err := cmd.Receiver1.Encode(cmd.Encoders.JSON())
 	if err != nil {
-		return errors.Wrapf(err, "invalid receiver format, %q", cmd.Receiver.String())
+		return errors.Wrapf(err, "invalid receiver format, %q", cmd.Receiver1.String())
 	}
-	cmd.receiver = receiver
+	cmd.receiver1 = receiver
+
+	receiver, err = cmd.Receiver2.Encode(cmd.Encoders.JSON())
+	if err != nil {
+		return errors.Wrapf(err, "invalid receiver format, %q", cmd.Receiver2.String())
+	}
+	cmd.receiver2 = receiver
 
 	return nil
 }
@@ -54,11 +62,14 @@ func (cmd *TransfersCommand) parseFlags() error {
 func (cmd *TransfersCommand) createOperation() (base.Operation, error) { // nolint:dupl}
 	e := util.StringError(utils.ErrStringCreate("transfer operation"))
 
-	item := token.NewTransfersItem(cmd.contract,
-		cmd.receiver, cmd.Amount.Big, cmd.Currency.CID)
+	item1 := token.NewTransfersItem(cmd.contract,
+		cmd.receiver1, cmd.Amount.Big, cmd.Currency.CID)
+
+	item2 := token.NewTransfersItem(cmd.contract,
+		cmd.receiver2, cmd.Amount.Big, cmd.Currency.CID)
 
 	fact := token.NewTransfersFact(
-		[]byte(cmd.Token), cmd.sender, []token.TransfersItem{item},
+		[]byte(cmd.Token), cmd.sender, []token.TransfersItem{item1, item2},
 	)
 
 	op := token.NewTransfers(fact)

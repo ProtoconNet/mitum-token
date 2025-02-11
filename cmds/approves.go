@@ -13,9 +13,11 @@ import (
 
 type ApprovesCommand struct {
 	OperationCommand
-	Approved ccmds.AddressFlag `arg:"" name:"approved" help:"approved account" required:"true"`
-	Amount   ccmds.BigFlag     `arg:"" name:"amount" help:"amount to approve" required:"true"`
-	approved base.Address
+	Approved1 ccmds.AddressFlag `arg:"" name:"approved" help:"approved account" required:"true"`
+	Approved2 ccmds.AddressFlag `arg:"" name:"approved" help:"approved account" required:"true"`
+	Amount    ccmds.BigFlag     `arg:"" name:"amount" help:"amount to approve" required:"true"`
+	approved1 base.Address
+	approved2 base.Address
 }
 
 func (cmd *ApprovesCommand) Run(pctx context.Context) error { // nolint:dupl
@@ -42,11 +44,17 @@ func (cmd *ApprovesCommand) parseFlags() error {
 		return err
 	}
 
-	approved, err := cmd.Approved.Encode(cmd.Encoders.JSON())
+	approved, err := cmd.Approved1.Encode(cmd.Encoders.JSON())
 	if err != nil {
-		return errors.Wrapf(err, "invalid approved format, %q", cmd.Approved.String())
+		return errors.Wrapf(err, "invalid approved format, %q", cmd.Approved1.String())
 	}
-	cmd.approved = approved
+	cmd.approved1 = approved
+
+	approved, err = cmd.Approved2.Encode(cmd.Encoders.JSON())
+	if err != nil {
+		return errors.Wrapf(err, "invalid approved format, %q", cmd.Approved2.String())
+	}
+	cmd.approved2 = approved
 
 	return nil
 }
@@ -54,11 +62,14 @@ func (cmd *ApprovesCommand) parseFlags() error {
 func (cmd *ApprovesCommand) createOperation() (base.Operation, error) { // nolint:dupl}
 	e := util.StringError(utils.ErrStringCreate("approves operation"))
 
-	item := token.NewApprovesItem(cmd.contract,
-		cmd.approved, cmd.Amount.Big, cmd.Currency.CID)
+	item1 := token.NewApprovesItem(cmd.contract,
+		cmd.approved1, cmd.Amount.Big, cmd.Currency.CID)
+
+	item2 := token.NewApprovesItem(cmd.contract,
+		cmd.approved2, cmd.Amount.Big, cmd.Currency.CID)
 
 	fact := token.NewApprovesFact(
-		[]byte(cmd.Token), cmd.sender, []token.ApprovesItem{item},
+		[]byte(cmd.Token), cmd.sender, []token.ApprovesItem{item1, item2},
 	)
 
 	op := token.NewApproves(fact)
