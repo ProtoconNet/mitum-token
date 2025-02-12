@@ -57,11 +57,11 @@ func (opp *ApprovesItemProcessor) PreProcess(
 
 	if st, err := cstate.ExistsState(
 		keyGenerator.Design(), "design", getStateFunc); err != nil {
-		return e.Wrap(common.ErrServiceNF.Wrap(errors.Errorf("token design state for contract account %v",
+		return e.Wrap(common.ErrServiceNF.Wrap(errors.Errorf("token service state for contract account %v",
 			opp.item.Contract(),
 		)))
 	} else if design, err := state.StateDesignValue(st); err != nil {
-		return e.Wrap(common.ErrServiceNF.Wrap(errors.Errorf("token design state value for contract account %v",
+		return e.Wrap(common.ErrServiceNF.Wrap(errors.Errorf("token service state value for contract account %v",
 			opp.item.Contract(),
 		)))
 	} else if apb := design.Policy().GetApproveBox(opp.sender); apb == nil {

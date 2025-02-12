@@ -88,7 +88,7 @@ func (opp *BurnProcessor) PreProcess(
 	if err := cstate.CheckExistsState(g.Design(), getStateFunc); err != nil {
 		return nil, base.NewBaseOperationProcessReasonError(
 			common.ErrMPreProcess.Wrap(common.ErrMServiceNF).
-				Errorf("token design for contract account %v", fact.Contract())), nil
+				Errorf("token service state for contract account %v", fact.Contract())), nil
 	}
 
 	st, err := cstate.ExistsState(g.TokenBalance(fact.Target().String()), "token balance", getStateFunc)

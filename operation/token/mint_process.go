@@ -89,13 +89,13 @@ func (opp *MintProcessor) PreProcess(
 	if st, err := cstate.ExistsState(keyGenerator.Design(), "design", getStateFunc); err != nil {
 		return nil, base.NewBaseOperationProcessReasonError(
 			common.ErrMPreProcess.
-				Wrap(common.ErrMServiceNF).Errorf("token design state for contract account %v",
+				Wrap(common.ErrMServiceNF).Errorf("token service state for contract account %v",
 				fact.Contract(),
 			)), nil
 	} else if _, err := state.StateDesignValue(st); err != nil {
 		return nil, base.NewBaseOperationProcessReasonError(
 			common.ErrMPreProcess.
-				Wrap(common.ErrMServiceNF).Errorf("token design state value for contract account %v",
+				Wrap(common.ErrMServiceNF).Errorf("token service state value for contract account %v",
 				fact.Contract(),
 			)), nil
 	}

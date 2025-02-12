@@ -90,13 +90,13 @@ func (opp *ApproveProcessor) PreProcess(
 		keyGenerator.Design(), "design", getStateFunc); err != nil {
 		return nil, base.NewBaseOperationProcessReasonError(
 			common.ErrMPreProcess.
-				Wrap(common.ErrMServiceNF).Errorf("token design state for contract account %v",
+				Wrap(common.ErrMServiceNF).Errorf("token service state for contract account %v",
 				fact.Contract(),
 			)), nil
 	} else if design, err := state.StateDesignValue(st); err != nil {
 		return nil, base.NewBaseOperationProcessReasonError(
 			common.ErrMPreProcess.
-				Wrap(common.ErrMServiceNF).Errorf("token design state value for contract account %v",
+				Wrap(common.ErrMServiceNF).Errorf("token service state value for contract account %v",
 				fact.Contract(),
 			)), nil
 	} else if apb := design.Policy().GetApproveBox(fact.Sender()); apb == nil {

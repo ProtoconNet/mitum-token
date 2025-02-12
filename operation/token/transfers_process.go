@@ -288,7 +288,7 @@ func PrepareSenderTotalAmounts(
 	for ca, rq := range required {
 		g := state.NewStateKeyGenerator(ca)
 		if err := cstate.CheckExistsState(g.Design(), getStateFunc); err != nil {
-			return nil, common.ErrServiceNF.Wrap(errors.Errorf("token design for contract account %v", ca))
+			return nil, common.ErrServiceNF.Wrap(errors.Errorf("token service state for contract account %v", ca))
 		}
 
 		st, err := cstate.ExistsState(g.TokenBalance(holder), fmt.Sprintf("token balance, %s", holder), getStateFunc)
